@@ -1,0 +1,674 @@
+﻿@model IEnumerable<ITSystem.Models.Tickets>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<div class="container-fluid">
+    <!-- Barra de herramientas (Titulo y Buscador) -->
+    <div class="card title-glass rounded rounded-3 p-3 mb-4">
+        <div class="row align-items-center mb-4">
+            <div class="col-auto">
+                <h2 class="fw-bold m-0">Gestión de Tickets</h2>
+            </div>
+            <div class="col">
+                <input type="text" id="searchInput" class="form-control border-1 rounded-pill" placeholder="Buscar ticket por folio, descripción o solicitante...">
+            </div>
+        </div>
+
+        <!-- NUEVA SECCIÓN: PESTAÑAS DE FILTRADO POR ESTADO -->
+        @{
+            // Calculamos los contadores dinámicamente desde el modelo en el servidor
+            var totalTickets = Model?.Count() ?? 0;
+            var totalNuevos = Model?.Count(t => t.Estado == "Nuevo" || t.Estado == "Abierto") ?? 0;
+            var totalProceso = Model?.Count(t => t.Estado == "En Proceso") ?? 0;
+            var totalEspera = Model?.Count(t => t.Estado == "En Espera" || t.Estado == "Pendiente") ?? 0;
+            var totalResueltos = Model?.Count(t => t.Estado == "Resuelto") ?? 0;
+        }
+        <ul class="nav nav-tabs border-bottom-0 gap-2" id="estadoTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active rounded-pill px-4 border shadow-lg fw-semibold btn-tab-filtro" data-estado="Todos">
+                    <i class="fas fa-list me-1 text-primary"></i> Todos
+                    <span class="badge bg-primary rounded-pill ms-1">@totalTickets</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill px-4 border shadow-lg fw-semibold btn-tab-filtro" data-estado="Nuevo">
+                    <i class="fas fa-envelope-open-text me-1 text-success"></i> Nuevos
+                    <span class="badge bg-success rounded-pill ms-1">@totalNuevos</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill px-4 border shadow-lg fw-semibold btn-tab-filtro" data-estado="En Proceso">
+                    <i class="fas fa-spinner me-1 text-warning"></i> En Proceso
+                    <span class="badge bg-warning text-dark rounded-pill ms-1">@totalProceso</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill px-4 border shadow-lg fw-semibold btn-tab-filtro" data-estado="En Espera">
+                    <i class="fas fa-pause me-1 text-info"></i> En Espera
+                    <span class="badge bg-info text-dark rounded-pill ms-1">@totalEspera</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill px-4 border shadow-lg fw-semibold btn-tab-filtro" data-estado="Resuelto">
+                    <i class="fas fa-check-circle me-1 text-secondary"></i> Resueltos
+                    <span class="badge bg-secondary rounded-pill ms-1">@totalResueltos</span>
+                </button>
+            </li>
+        </ul>
+
+
+        <!-- SECCIÓN DE CARDS DE TICKETS -->
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mt-2" id="ticketsContainer">
+            @if (Model != null && Model.Any())
+            {
+                foreach (var ticket in Model)
+                {
+                    <!-- Badge de color según el estado -->
+                    var bgEstado = ticket.Estado == "Nuevo" ? "bg-success" :
+                    ticket.Estado == "En Proceso" ? "bg-warning text-dark" : "bg-secondary";
+
+                    <div class="col ticket-item">
+                        <div class="card h-100 card-area shadow-lg border-1 rounded-3 card-ticket">
+                            <!-- Cabecera de la Tarjeta -->
+                            <div class="card-header bg-primary d-flex justify-content-between align-items-center border-0 py-3">
+                                <span class="fw-bold text-light small global-folio"><i class="fas fa-hashtag"></i> @ticket.Folio</span>
+                                <span class="badge @bgEstado rounded-pill px-3">@ticket.Estado</span>
+                            </div>
+
+                            <!-- Cuerpo de la Tarjeta -->
+                            <div class="card-body">
+                                <!-- Categoría y Subcategoría -->
+                                <h6 class="card-subtitle mb-2 text-primary fw-bold">
+                                    <i class="fas fa-folder me-1"></i> @(ticket.Categoria?.Nombre ?? "Sin Categoría")
+                                    <small class="text-muted fw-normal"> / @(ticket.Subcategoria?.Nombre ?? "General")</small>
+                                </h6>
+
+                                <!-- Descripción del Ticket -->
+                                <p class="card-text text-dark text-truncate-2 descripcion-ticket" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 48px;" title="@ticket.Descripcion">
+                                    @ticket.Descripcion
+                                </p>
+
+                                <hr class="text-muted opacity-25 my-2">
+
+                                <!-- Información Detallada (Fila inferior) -->
+                                <div class="row align-items-center g-2 small text-muted">
+                                    <!-- LADO IZQUIERDO: Foto y Nombre del Solicitante -->
+                                    <div class="col-7 d-flex align-items-center gap-2">
+                                        @if (ticket.UsuarioSolicitante != null && ticket.UsuarioSolicitante.NumeroEmpleado.HasValue)
+                                        {
+                                            <div class="d-flex align-items-center position-relative" style="width: 28px; height: 28px;">
+                                                <img src="/Images/@(ticket.UsuarioSolicitante.NumeroEmpleado).jpg"
+                                                     alt="Foto"
+                                                     class="rounded-circle border position-absolute top-0 start-0"
+                                                     style="width: 28px; height: 28px; object-fit: cover; z-index: 2;"
+                                                     onerror="this.style.display='none'; document.getElementById('avatar-@ticket.Id').style.setProperty('display', 'flex', 'important');" />
+
+                                                <div id="avatar-@ticket.Id" class="rounded-circle bg-success text-white align-items-center justify-content-center fw-bold text-uppercase position-absolute top-0 start-0"
+                                                     style="width: 28px; height: 28px; font-size: 0.75rem; min-width: 28px; display: none; z-index: 1;">
+                                                    @(ticket.UsuarioSolicitante?.Nombre?.Substring(0, 1) ?? "U")
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold text-uppercase"
+                                                 style="width: 28px; height: 28px; font-size: 0.75rem; min-width: 28px;">
+                                                @(ticket.UsuarioSolicitante?.Nombre?.Substring(0, 1) ?? "U")
+                                            </div>
+                                        }
+                                        <span class="solicitante-ticket text-truncate fw-semibold" title="@(ticket.UsuarioSolicitante?.Nombre ?? "Anónimo")">
+                                            @(ticket.UsuarioSolicitante?.Nombre ?? "Anónimo")
+                                        </span>
+                                    </div>
+
+                                    <!-- LADO DERECHO: Área -->
+                                    <div class="col-5 text-end text-truncate fw-semibold">
+                                        <i class="fas fa-layer-group me-1"></i> @(ticket.Area?.Nombre ?? "N/A")
+                                    </div>
+
+                                    <!-- FECHA -->
+                                    <div class="col-12 mt-1 pt-1 border-top border-light text-muted" style="font-size: 0.75rem;">
+                                        <i class="far fa-calendar-alt me-1"></i>
+                                        @(ticket.FechaCreacion.HasValue? ticket.FechaCreacion.Value.ToString("dd/MM/yyyy hh:mm tt") : "Sin fecha")
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pie de la Tarjeta (Acciones) -->
+                            <div class="card-footer border-0 d-flex justify-content-end pb-3">
+                                <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 btn-ver-detalles" data-id="@ticket.Id">
+                                    <i class="fas fa-eye me-1"></i> Ver Detalles
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="col-12 text-center my-5 w-100" id="noTicketsMessage">
+                    <i class="fas fa-ticket-alt fa-3x text-muted mb-3"></i>
+                    <p class="text-muted fs-5">No se encontraron tickets registrados.</p>
+                </div>
+            }
+        </div>
+
+        <!-- Contenedor dinámico si la búsqueda de JS no encuentra resultados -->
+        <div class="col-12 text-center my-5 d-none" id="emptySearchMessage">
+            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+            <p class="text-muted fs-5">No hay coincidencias con tu búsqueda.</p>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DETALLES DE TICKET -->
+<div class="modal fade" id="ModalDetallesTicket" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content rounded-3 shadow">
+
+            <!-- Encabezado del Modal -->
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-info-circle me-2"></i> Detalles del Ticket: <span id="lblFolio"></span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Cuerpo del Modal -->
+            <div class="modal-body p-4">
+                <div class="row g-3">
+
+                    <!-- Estado -->
+                    <div class="col-md-4">
+                        <label class="text-muted small fw-bold d-block">Estado</label>
+                        <span id="lblEstado" class="badge rounded-pill px-3 fs-6 mt-1"></span>
+                    </div>
+
+                    <!-- Fecha de Creación -->
+                    <div class="col-md-4">
+                        <label class="text-muted small fw-bold d-block">Fecha de Creación</label>
+                        <span id="lblFecha" class="text-dark fw-semibold d-block mt-1"></span>
+                    </div>
+
+                    <!-- Área -->
+                    <div class="col-md-4">
+                        <label class="text-muted small fw-bold d-block">Área</label>
+                        <span id="lblArea" class="text-dark fw-semibold d-block mt-1"></span>
+                    </div>
+
+                    <hr class="my-2 opacity-25">
+
+                    <!-- Categoría / Subcategoría -->
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-bold d-block">Categoría / Subcategoría</label>
+                        <span id="lblCategoriaSub" class="text-dark fw-semibold d-block mt-1"></span>
+                    </div>
+
+                    <!-- Solicitante (CON FOTO INTEGRADA) -->
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-bold d-block">Solicitante</label>
+                        <div class="d-flex align-items-center gap-2 mt-1">
+                            <!-- Contenedor de la foto del usuario -->
+                            <div class="position-relative" style="width: 32px; height: 32px; min-width: 32px;">
+                                <!-- Imagen que busca el archivo .jpg -->
+                                <img id="imgDetalleUsuario" src="" alt="Foto" class="rounded-circle border" style="width: 32px; height: 32px; object-fit: cover; display: none;" />
+
+                                <!-- Inicial de respaldo si no hay foto física -->
+                                <div id="avatarDetalleUsuario" class="rounded-circle bg-success text-white align-items-center justify-content-center fw-bold text-uppercase" style="width: 32px; height: 32px; font-size: 0.85rem; display: none;"></div>
+                            </div>
+                            <!-- Nombre del empleado -->
+                            <span id="lblSolicitante" class="text-dark fw-semibold text-truncate"></span>
+                        </div>
+                    </div>
+
+                    <!-- Especialista Asignado -->
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-bold d-block">Especialista Asignado</label>
+                        <span id="lblAsignado" class="text-dark fw-semibold d-block mt-1"></span>
+                    </div>
+
+                    <hr class="my-2 opacity-25">
+
+                    <!-- Descripción del Problema -->
+                    <div class="col-12">
+                        <label class="text-muted small fw-bold d-block mb-1">Descripción del Problema</label>
+                        <div class="p-3 bg-light rounded border text-dark" id="lblDescripcion" style="white-space: pre-wrap; min-height: 60px;"></div>
+                    </div>
+
+                    <!-- Notas / Comentarios -->
+                    <div class="col-12">
+                        <label class="text-muted small fw-bold d-block mb-1">Notas / Comentarios Iniciales</label>
+                        <div class="p-3 bg-light rounded border text-muted small" id="lblComentarios" style="white-space: pre-wrap; min-height: 45px;"></div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Pie del Modal -->
+            <div class="modal-footer bg-light d-flex justify-content-between align-items-center">
+                <!-- Contenedor dinámico para botones de acción de IT -->
+                <div id="contenedorAcciones">
+                    <!-- Los botones se generarán dinámicamente con JavaScript -->
+                </div>
+
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="ModalTomarTicket" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Confirmar acción</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <p>¿Deseas tomar este ticket y cambiar su estatus a <strong>En proceso</strong>?</p>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary rounded-pill" id="btnConfirmarTomar">Confirmar</button>
+                <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="ModalEnEspera" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">Poner TIcket en Espera</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <p>¿Deseas poner en espera este ticket y cambiar su estatus a <strong>En espera</strong>?</p>
+
+                <input type="hidden" id="EnEsperaID" />
+
+                <textarea id="EnEsperaComentario"
+                          class="form-control"
+                          rows="3"
+                          maxlength="100"
+                          placeholder="Motivo de poner En Espera (máx. 100 caracteres)">
+                </textarea>
+
+                <small id="EnEsperaCount" class="text-muted">0 / 100</small>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning rounded-pill" id="btnConfirmarEnEspera">Poner en espera</button>
+                <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="ModalResueltoTicket" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">TIcket Resuelto</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <p>¿Deseas cambiar el estatus de este ticket a <strong>Resuelto</strong>?</p>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success rounded-pill" id="btnConfirmarResuelto">Confirmar</button>
+                <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script>
+                // ==========================================
+        // LÓGICA DE FILTRADO DINÁMICO POR PESTAÑAS
+        // ==========================================
+        const tabs = document.querySelectorAll('.btn-tab-filtro');
+        const items = document.querySelectorAll('.ticket-item');
+        const emptySearchMessage = document.getElementById('emptySearchMessage');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function () {
+                // Quitar clase activa a todas las pestañas y ponérsela a la seleccionada
+                tabs.forEach(t => t.classList.remove('active', 'bg-light'));
+                this.classList.add('active');
+
+                const estadoSeleccionado = this.getAttribute('data-estado');
+                let countVisibles = 0;
+
+                items.forEach(item => {
+                    const badgeEstado = item.querySelector('.badge').textContent.trim();
+
+                    // Normalización de estados equivalentes
+                    let estadoNormalizado = badgeEstado;
+                    if (badgeEstado === "Abierto") estadoNormalizado = "Nuevo";
+                    if (badgeEstado === "Pendiente") estadoNormalizado = "En Espera";
+
+                    // Lógica de visualización
+                    if (estadoSeleccionado === "Todos" || estadoNormalizado === estadoSeleccionado) {
+                        item.style.setProperty("display", "block", "important");
+                        countVisibles++;
+                    } else {
+                        item.style.setProperty("display", "none", "important");
+                    }
+                });
+
+                // Si no hay tickets en el estado seleccionado, mostramos la alerta de vacío
+                if (countVisibles === 0) {
+                    if (emptySearchMessage) {
+                        emptySearchMessage.querySelector('p').textContent = "No hay tickets registrados en este estado.";
+                        emptySearchMessage.classList.remove("d-none");
+                    }
+                } else {
+                    emptySearchMessage?.classList.add("d-none");
+                }
+
+                // Limpiar el buscador de texto al cambiar de pestaña para evitar conflictos cruzados
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) searchInput.value = '';
+            });
+        });
+
+    </script>
+    <script>
+        document.getElementById('searchInput').addEventListener('input', function () {
+            const filter = this.value.toLowerCase();
+            const items = document.querySelectorAll('.ticket-item');
+
+            items.forEach(item => {
+                // Campos por los que queremos buscar
+                const folio = item.querySelector('.card-header span').textContent.toLowerCase();
+                const descripcion = item.querySelector('.descripcion-ticket').textContent.toLowerCase();
+                const solicitante = item.querySelector('.solicitante-ticket').textContent.toLowerCase();
+
+                if (folio.includes(filter) || descripcion.includes(filter) || solicitante.includes(filter)) {
+                    item.style.display = ""; // Mostrar
+                } else {
+                    item.style.display = "none"; // Ocultar
+                }
+            });
+        });
+
+    </script>
+
+    <script>
+        // ==========================================
+        // 1. VARIABLES GLOBALES DE LOS MODALES
+        // ==========================================
+        let modalDetalles = null;
+        let modalTomar = null;
+        let modalEspera = null;
+        let modalResuelto = null; // <-- AÑADE ESTA VARIABLE
+        let ticketIdSeleccionado = null;
+
+        let txMotivo = null;
+        let lblCount = null;
+
+        // ==========================================
+        // 2. INICIALIZACIÓN SEGURA AL CARGAR EL DOM
+        // ==========================================
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const elDetalles = document.getElementById('ModalDetallesTicket');
+            const elTomar = document.getElementById('ModalTomarTicket');
+            const elEspera = document.getElementById('ModalEnEspera');
+            const elResuelto = document.getElementById('ModalResueltoTicket');
+
+            if (elDetalles) modalDetalles = new bootstrap.Modal(elDetalles);
+            if (elTomar) modalTomar = new bootstrap.Modal(elTomar);
+            if (elEspera) modalEspera = new bootstrap.Modal(elEspera);
+            if (elResuelto) modalResuelto = new bootstrap.Modal(elResuelto);
+
+            txMotivo = document.getElementById('EnEsperaComentario');
+            lblCount = document.getElementById('EnEsperaCount');
+
+
+            // CONTADOR DE CARACTERES EN TIEMPO REAL
+            if (txMotivo) {
+                txMotivo.addEventListener('input', function() {
+                    if (lblCount) {
+                        lblCount.textContent = `${this.value.length} / 100`;
+                    }
+                });
+            }
+
+            // BARRA DE BÚSQUEDA EN TIEMPO REAL
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', function () {
+                    const filter = this.value.toLowerCase().trim();
+                    const items = document.querySelectorAll('.ticket-item');
+
+                    items.forEach(item => {
+                        const folio = item.querySelector('.card-header span')?.textContent.toLowerCase() || "";
+                        const descripcion = item.querySelector('.descripcion-ticket')?.textContent.toLowerCase() || "";
+                        const solicitante = item.querySelector('.solicitante-ticket')?.textContent.toLowerCase() || "";
+
+                        if (folio.includes(filter) || descripcion.includes(filter) || solicitante.includes(filter)) {
+                            item.style.display = "";
+                        } else {
+                            item.style.display = "none";
+                        }
+                    });
+                });
+            }
+        });
+
+        // ==========================================
+        // 3. ESCUCHAR CLICS EN "VER DETALLES"
+        // ==========================================
+        document.addEventListener('click', async function (e) {
+            if (e.target && e.target.classList.contains('btn-ver-detalles') || e.target.closest('.btn-ver-detalles')) {
+                const boton = e.target.classList.contains('btn-ver-detalles') ? e.target : e.target.closest('.btn-ver-detalles');
+                const ticketId = boton.getAttribute('data-id');
+
+                try {
+                    const response = await fetch(`/GestionarTickets/GetDetallesJson?id=${ticketId}`);
+                    if (!response.ok) throw new Error('No se pudieron obtener los detalles.');
+
+                    const ticket = await response.json();
+
+                    // Rellenar datos en el HTML del modal de detalles
+                    document.getElementById('lblFolio').textContent = ticket.folio;
+                    document.getElementById('lblFecha').textContent = ticket.fecha;
+                    document.getElementById('lblArea').textContent = ticket.area;
+                    document.getElementById('lblCategoriaSub').textContent = `${ticket.categoria} / ${ticket.subcategoria}`;
+                    document.getElementById('lblSolicitante').textContent = ticket.solicitante;
+                    document.getElementById('lblAsignado').textContent = ticket.asignado;
+                    document.getElementById('lblDescripcion').textContent = ticket.descripcion;
+                    document.getElementById('lblComentarios').textContent = ticket.comentarios;
+
+                    // Control de Estilos del Badge de Estado
+                    const badge = document.getElementById('lblEstado');
+                    badge.textContent = ticket.estado;
+                    badge.className = "badge rounded-pill px-3 fs-6 mt-1 " +
+                        (ticket.estado === "Nuevo" || ticket.estado === "Abierto" ? "bg-success" :
+                         ticket.estado === "En Proceso" ? "bg-warning text-dark" : "bg-secondary");
+
+                    // MANEJO DE LA FOTO O AVATAR DEL SOLICITANTE
+                    const imgModal = document.getElementById('imgDetalleUsuario');
+                    const avatarModal = document.getElementById('avatarDetalleUsuario');
+
+                    if (ticket.numeroEmpleado) {
+                        imgModal.src = `/Images/${ticket.numeroEmpleado}.jpg`;
+                        imgModal.style.display = "block";
+                        avatarModal.style.display = "none";
+
+                        imgModal.onerror = function() {
+                            this.style.display = "none";
+                            avatarModal.textContent = (ticket.solicitante || "U").substring(0, 1).toUpperCase();
+                            avatarModal.style.setProperty('display', 'flex', 'important');
+                        };
+                    } else {
+                        imgModal.style.display = "none";
+                        avatarModal.textContent = (ticket.solicitante || "U").substring(0, 1).toUpperCase();
+                        avatarModal.style.setProperty('display', 'flex', 'important');
+                    }
+
+                    // 4. CONTROL DINÁMICO DE BOTONES DE ACCIÓN
+                    const contenedorAcciones = document.getElementById('contenedorAcciones');
+                    if (contenedorAcciones) {
+                        contenedorAcciones.innerHTML = ''; 
+                        const currentId = ticket.id || ticketId;
+
+                        if (ticket.estado === "Abierto" || ticket.estado === "Nuevo") {
+                            contenedorAcciones.innerHTML = `
+                                <button type="button" class="btn btn-success rounded-pill px-4 btn-accion-ticket" data-accion="Tomar" data-id="${currentId}">
+                                    <i class="fas fa-hand-holding-hand me-1"></i> Tomar Ticket
+                                </button>
+                            `;
+                        }
+                        else if (ticket.estado === "En Proceso") {
+                            contenedorAcciones.innerHTML = `
+                                <button type="button" class="btn btn-warning text-dark rounded-pill px-4 me-2 btn-accion-ticket" data-accion="Esperar" data-id="${currentId}">
+                                    <i class="fas fa-pause me-1"></i> Poner en Espera
+                                </button>
+                                <button type="button" class="btn btn-primary rounded-pill px-4 btn-accion-ticket" data-accion="Resolver" data-id="${currentId}">
+                                    <i class="fas fa-check-double me-1"></i> Resuelto
+                                </button>
+                            `;
+                        }
+                        else if (ticket.estado === "En Espera" || ticket.estado === "Pendiente") {
+                            contenedorAcciones.innerHTML = `
+                                <button type="button" class="btn btn-success rounded-pill px-4 me-2 btn-accion-ticket" data-accion="Reanudar" data-id="${currentId}">
+                                    <i class="fas fa-play me-1"></i> Reanudar
+                                </button>
+                                <button type="button" class="btn btn-primary rounded-pill px-4 btn-accion-ticket" data-accion="Resolver" data-id="${currentId}">
+                                    <i class="fas fa-check-double me-1"></i> Resuelto
+                                </button>
+                            `;
+                        }
+                    }
+
+                    // Mostrar el modal de detalles principal
+                    if (modalDetalles) modalDetalles.show();
+
+                } catch (error) {
+                    console.error(error);
+                    alert('Ocurrió un inconveniente al cargar el resumen detallado del ticket.');
+                }
+            }
+        });
+
+                // ==========================================
+        // 5. DELEGACIÓN DE EVENTOS DE ACCIONES (IT)
+        // ==========================================
+        const divAcciones = document.getElementById('contenedorAcciones');
+        if (divAcciones) {
+            divAcciones.addEventListener('click', function (e) {
+                const boton = e.target.closest('.btn-accion-ticket');
+                if (!boton) return;
+
+                const idTicket = boton.getAttribute('data-id');
+                const accion = boton.getAttribute('data-accion');
+
+                ticketIdSeleccionado = idTicket;
+
+                if (accion === 'Tomar') {
+                    if (modalDetalles) modalDetalles.hide();
+                    if (modalTomar) modalTomar.show();
+                }
+                else if (accion === 'Esperar') {
+                    if (modalDetalles) modalDetalles.hide();
+                    if (txMotivo) {
+                        txMotivo.value = '';
+                        if (lblCount) lblCount.textContent = '0 / 100';
+                    }
+                    if (modalEspera) modalEspera.show();
+                }
+                else if (accion === 'Resolver') {
+                    // CAMBIO: Ahora oculta detalles y despliega tu nuevo modal de confirmación
+                    if (modalDetalles) modalDetalles.hide();
+                    if (modalResuelto) modalResuelto.show();
+                }
+                else if (accion === 'Reanudar') {
+                    ejecutarCambioEstado(idTicket, 'En Proceso');
+                }
+            });
+        }
+
+        // ACCIÓN: CONFIRMAR "TOMAR TICKET"
+        const btnConfTomar = document.getElementById('btnConfirmarTomar');
+        if (btnConfTomar) {
+            btnConfTomar.addEventListener('click', function () {
+                if (ticketIdSeleccionado) {
+                    if (modalTomar) modalTomar.hide();
+                    ejecutarCambioEstado(ticketIdSeleccionado, 'En Proceso');
+                }
+            });
+        }
+
+        // ACCIÓN: CONFIRMAR "PONER EN ESPERA" (CON VALIDACIÓN)
+        const btnConfEspera = document.getElementById('btnConfirmarEnEspera');
+        if (btnConfEspera) {
+            btnConfEspera.addEventListener('click', function () {
+                const motivoText = txMotivo ? txMotivo.value.trim() : '';
+                if (!motivoText) {
+                    alert('Por favor, ingresa el motivo por el cual estás poniendo en espera el ticket.');
+                    if (txMotivo) txMotivo.focus();
+                    return;
+                }
+                if (ticketIdSeleccionado) {
+                    if (modalEspera) modalEspera.hide();
+                    ejecutarCambioEstado(ticketIdSeleccionado, 'En Espera', motivoText);
+                }
+            });
+        }
+
+               // NUEVA ACCIÓN: CONFIRMAR "TICKET RESUELTO"
+        const btnConfResuelto = document.getElementById('btnConfirmarResuelto');
+        if (btnConfResuelto) {
+            btnConfResuelto.addEventListener('click', function () {
+                if (ticketIdSeleccionado) {
+                    if (modalResuelto) modalResuelto.hide();
+                    ejecutarCambioEstado(ticketIdSeleccionado, 'Resuelto');
+                }
+            });
+        }
+
+        // ==========================================
+        // 6. FUNCIÓN POST ASÍNCRONA HACIA C#
+        // ==========================================
+        function ejecutarCambioEstado(id, nuevoEstado, comentario = "") {
+            fetch('/GestionarTickets/CambiarEstado', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    id: parseInt(id),
+                    estado: nuevoEstado,
+                    comentario: comentario
+                })
+            })
+            .then(res => {
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    alert("Error al actualizar el estado del ticket.");
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Ocurrió un error en la conexión con el servidor.");
+            });
+        }
+        
+    </script>
+}

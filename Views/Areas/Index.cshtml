@@ -1,0 +1,158 @@
+﻿<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+
+<div class="container-fluid mt-1">
+   <div class="card title-glass rounded rounded-3 p-3">
+               <div class="card mb-5 p-3 shadow-lg border-1 rounded-pill title-glass">
+            <h2 class="m-0 text-start fw-bold">Gestión de Areas</h2>
+        </div>
+        <div class="row mb-4 align-items-center">
+            <div class="col-auto">
+                <button class="btn btn-success rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#CreateAreaModal">
+                    <i class="fas fa-plus"></i> Nueva Área
+                </button>
+            </div>
+            <div class="col">
+                <input type="text" id="searchInput" class="form-control rounded-pill" placeholder="Buscar categoria/Subcategoria...">
+            </div>
+        </div>
+
+        <div class="row">
+            @foreach (var area in Model)
+            {
+                <div class="col-md-3 mb-3">
+                    <div class="card card-area shadow-lg border-3" style="height: 150px;">
+
+                        <!-- Botón de engrane -->
+                        <button class="settings-btn">
+                            <i class="fas fa-cog"></i>
+                        </button>
+
+                        <!-- Menú flotante -->
+                        <div class="settings-menu">
+                            <a href="/Areas/Edit/@area.ID">Editar</a>
+                            <a href="/Areas/Delete/@area.ID" class="text-danger">Eliminar</a>
+                        </div>
+
+                        <div class="card-body">
+                            <h5 class="card-title">@area.Nombre</h5>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+   </div>
+</div>
+
+<!-- Modal Crear Área -->
+<div class="modal fade" id="CreateAreaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header bg-primary">
+                <h5 class="modal-title text-light">Nueva Área</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form id="formCreateArea">
+                <div class="modal-body">
+
+                    <div class="mb-3">
+                        <label class="form-label">Nombre del Área</label>
+                        <input type="text" id="NombreArea" class="form-control" required />
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Guardar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("click", function (e) {
+            const btn = e.target.closest(".settings-btn");
+            const menus = document.querySelectorAll(".settings-menu");
+
+            // Cerrar todos los menús
+            menus.forEach(m => m.style.display = "none");
+
+            // Si se hizo clic en un engrane, abrir su menú
+            if (btn) {
+                const menu = btn.parentElement.querySelector(".settings-menu");
+                menu.style.display = "block";
+                e.stopPropagation();
+            }
+        });
+    </script>
+
+    <script>
+        document.getElementById("formCreateArea").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const nombre = document.getElementById("NombreArea").value.trim();
+
+            fetch("/Areas/CreateAjax", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ Nombre: nombre })
+            })
+            .then(res => res.json())
+            .then(data => {
+
+                if (!data.success) {
+                    alert(data.message);
+                    return;
+                }
+
+                // Cerrar modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById("CreateAreaModal"));
+                modal.hide();
+
+                // Limpiar input
+                document.getElementById("NombreArea").value = "";
+
+                // Agregar la nueva card al DOM
+                agregarAreaAlDOM(data.data);
+
+                // Notificación
+                alert("Área creada correctamente");
+            });
+        });
+
+        function agregarAreaAlDOM(area) {
+
+            const contenedor = document.querySelector(".row");
+
+            const card = document.createElement("div");
+            card.classList.add("col-md-3", "mb-3");
+
+            card.innerHTML = `
+                <div class="card card-area shadow-sm border-1" style="height: 150px;">
+
+                    <button class="settings-btn">
+                        <i class="fas fa-cog"></i>
+                    </button>
+
+                    <div class="settings-menu">
+                        <a href="/Areas/Edit/${area.id}">Editar</a>
+                        <a href="/Areas/Delete/${area.id}" class="text-danger">Eliminar</a>
+                    </div>
+
+                    <div class="card-body">
+                        <h5 class="card-title">${area.nombre}</h5>
+                    </div>
+                </div>
+            `;
+
+            contenedor.appendChild(card);
+        }
+    </script>
+}

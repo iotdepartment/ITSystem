@@ -1,0 +1,449 @@
+﻿@model IEnumerable<ITSystem.Models.Categorias>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<div class="container-fluid">
+
+    <div class="card title-glass rounded rounded-3 p-3">
+
+        <div class="card mb-4 p-3 shadow-lg border-1 rounded-pill title-glass">
+            <h2 class="m-0 text-start fw-bold">Gestión de Categorías</h2>
+        </div>
+        <div class="row mb-4 align-items-center">
+            <div class="col-auto">
+                <button class="btn btn-success rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#ModalNuevaCategoria">
+                    <i class="fas fa-folder-plus"></i> Nueva Categoría
+                </button>
+            </div>
+            <div class="col">
+                <input type="text" id="searchInput" class="form-control rounded-pill" placeholder="Buscar categoria/Subcategoria...">
+            </div>
+
+            <div class="row g-4">
+                @foreach (var c in Model)
+                {
+                    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                        <div class="card card-area shadow-sm p-3 position-relative">
+                            <div class="card-body d-flex flex-column justify-content-between">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h5 class="card-title fw-bold">@c.Nombre</h5>
+                                    <button class="settings-btn">
+                                        <i class="fas fa-cog"></i>
+                                    </button>
+                                    <div class="settings-menu">
+                                        <a href="javascript:void(0);"
+                                           class="open-subcat-modal"
+                                           data-categoria="@c.Id">
+                                            <i class="fas fa-plus"></i> Nueva Subcategoría
+                                        </a>
+                                        <a href="javascript:void(0);"
+                                           class="open-edit-modal"
+                                           data-id="@c.Id"
+                                           data-nombre="@c.Nombre"
+                                           data-subcategorias='@Html.Raw(System.Text.Json.JsonSerializer.Serialize(c.Subcategorias?.Select(s => new { s.Id, s.Nombre })))'>
+                                            <i class="fas fa-edit"></i> Editar
+                                        </a>
+                                        <a href="javascript:void(0);"
+                                           class="text-danger open-delete-modal"
+                                           data-id="@c.Id"
+                                           data-nombre="@c.Nombre"
+                                           data-subcount="@(c.Subcategorias?.Count ?? 0)">
+                                            <i class="fas fa-trash"></i> Eliminar
+                                        </a>
+
+                                    </div>
+                                </div>
+
+                                <!-- Lista de subcategorías -->
+                                <!-- Nueva estructura de subcategorías como etiquetas modernas -->
+                                @if (c.Subcategorias != null && c.Subcategorias.Any())
+                                {
+                                    <div class="subcategorias-container d-flex flex-wrap gap-2 mb-3">
+                                        @foreach (var sub in c.Subcategorias)
+                                        {
+                                            <span class="subcategoria-badge">
+                                                <i class="fas fa-tag fa-xs me-1 text-muted"></i>
+                                                @sub.Nombre
+                                            </span>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p class="text-muted small ps-1"><i class="fas fa-info-circle me-1"></i>Sin subcategorías</p>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="ModalNuevaSubcategoria" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form asp-action="AgregarSubcategoria" asp-controller="Categorias" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nueva Subcategoría</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="CategoriaID" name="CategoriaID" />
+
+                    <div class="mb-3">
+                        <label for="Nombre" class="form-label">Nombre</label>
+                        <input type="text" id="Nombre" name="Nombre" class="form-control" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Guardar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Categoría -->
+<div class="modal fade" id="ModalNuevaCategoria" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <!-- Apunta al método AgregarCategoria dentro de tu CategoriasController -->
+            <form asp-action="AgregarCategoria" asp-controller="Categorias" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nueva Categoría</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="Nombre" class="form-label">Nombre de la Categoría</label>
+                        <input type="text" id="Nombre" name="Nombre" class="form-control" placeholder="Ej. Hardware, Software, Redes" required />
+                        <span class="text-danger" data-valmsg-for="Nombre"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Guardar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Categoría y Subcategorías -->
+<div class="modal fade" id="ModalEditarCategoria" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="formEditarCategoria">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Editar Categoría</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- ID Oculto de la Categoría -->
+                    <input type="hidden" id="EditCategoriaId" />
+
+                    <!-- Nombre de la Categoría -->
+                    <div class="mb-4">
+                        <label for="EditCategoriaNombre" class="form-label fw-bold">Nombre de la Categoría</label>
+                        <input type="text" id="EditCategoriaNombre" class="form-control" required />
+                    </div>
+
+                    <!-- Listado de Subcategorías con Inputs Modificables -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Subcategorías (Editar nombre o eliminar)</label>
+                        <div id="subcategoriasEditLista" class="d-flex flex-column gap-2" style="max-height: 250px; overflow-y: auto; padding-right: 5px;">
+                            <!-- Se genera dinámicamente con JavaScript -->
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Actualizar Todo</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmación de Eliminación -->
+<div class="modal fade" id="ModalEliminarCategoria" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-danger">
+            <form asp-action="ConfirmarEliminar" asp-controller="Categorias" method="post">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>¿Confirmar eliminación?</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <!-- ID Oculto para enviar al Controlador -->
+                    <input type="hidden" id="DeleteCategoriaId" name="id" />
+
+                    <p class="fs-5">Está a punto de eliminar la categoría:</p>
+                    <p id="DeleteCategoriaNombre" class="fw-bold fs-4 text-danger mb-3"></p>
+
+                    <div class="alert alert-warning border-warning small mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <span id="DeleteCategoriaAdvertencia"></span>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="submit" class="btn btn-danger px-4">Sí, Eliminar Todo</button>
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+@section scripts{
+    <script>
+        document.addEventListener("click", function (e) {
+            const btn = e.target.closest(".settings-btn");
+            const menus = document.querySelectorAll(".settings-menu");
+
+            // Si el clic fue en un engrane
+            if (btn) {
+                const menu = btn.parentElement.querySelector(".settings-menu");
+
+                // Alternar visibilidad
+                if (menu.style.display === "block") {
+                    menu.style.display = "none";
+                } else {
+                    // Cerrar otros menús antes de abrir este
+                    menus.forEach(m => m.style.display = "none");
+                    menu.style.display = "block";
+                }
+
+                e.stopPropagation();
+            } else {
+                // Cerrar todos los menús si se hace clic fuera
+                menus.forEach(m => m.style.display = "none");
+            }
+        });
+    </script>
+
+    <script>
+        document.addEventListener("click", function(e) {
+            const btn = e.target.closest(".open-subcat-modal");
+            if (btn) {
+                const categoriaId = btn.getAttribute("data-categoria");
+                document.getElementById("CategoriaID").value = categoriaId;
+                document.getElementById("Nombre").value = "";
+                const modal = new bootstrap.Modal(document.getElementById("ModalNuevaSubcategoria"));
+                modal.show();
+            }
+        });
+    </script>
+
+    <script>
+        document.getElementById("searchInput").addEventListener("keyup", function (e) {
+            const searchText = e.target.value.toLowerCase().trim();
+            const cards = document.querySelectorAll(".row.g-4 > div");
+
+            cards.forEach(card => {
+                const titleText = card.querySelector(".card-title")?.textContent.toLowerCase() || "";
+
+                // Obtiene el texto de todas las subcategorías dentro de esta tarjeta específica
+                const subcatBadges = Array.from(card.querySelectorAll(".subcategoria-badge"));
+                const subcatText = subcatBadges.map(badge => badge.textContent.toLowerCase()).join(" ");
+
+                // Muestra la tarjeta si coincide con el título principal O con alguna subcategoría
+                if (titleText.includes(searchText) || subcatText.includes(searchText)) {
+                    card.style.setProperty("display", "", "important");
+                } else {
+                    card.style.setProperty("display", "none", "important");
+                }
+            });
+        });
+
+    </script>
+
+    <script>
+                document.addEventListener("click", async function (e) {
+            // 1. CAPTURAR EL CLIC EN EL BOTÓN EDITAR CATEGORÍA (DE TU MENÚ DE ENGRANE)
+            const editBtn = e.target.closest(".open-edit-modal");
+            if (editBtn) {
+                e.preventDefault();
+
+                const catId = editBtn.getAttribute("data-id");
+                const catNombre = editBtn.getAttribute("data-nombre");
+                const subcategorias = JSON.parse(editBtn.getAttribute("data-subcategorias") || "[]");
+
+                document.getElementById("EditCategoriaId").value = catId;
+                document.getElementById("EditCategoriaNombre").value = catNombre;
+
+                const listaContenedor = document.getElementById("subcategoriasEditLista");
+                listaContenedor.innerHTML = "";
+
+                if (subcategorias.length === 0) {
+                    listaContenedor.innerHTML = '<p class="text-muted text-center p-2 mb-0 small">Sin subcategorías registradas.</p>';
+                } else {
+                    subcategorias.forEach(sub => {
+                        listaContenedor.innerHTML += `
+                            <div class="input-group input-group-sm mb-2" id="subrow-${sub.Id}">
+                                <input type="text" class="form-control input-sub-nombre" value="${sub.Nombre}" data-subid="${sub.Id}" />
+                                <button type="button" class="btn btn-outline-success btn-guardar-sub" data-subid="${sub.Id}" title="Guardar cambios">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-eliminar-sub" data-subid="${sub.Id}" title="Eliminar definitivamente">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        `;
+                    });
+                }
+
+                const modal = new bootstrap.Modal(document.getElementById("ModalEditarCategoria"));
+                modal.show();
+                editBtn.closest(".settings-menu").style.display = "none";
+            }
+
+            // 2. GUARDAR RENOMBRAMIENTO DE SUBCATEGORÍA VÍA FETCH
+            const saveSubBtn = e.target.closest(".btn-guardar-sub");
+            if (saveSubBtn) {
+                const subId = saveSubBtn.getAttribute("data-subid");
+                const inputElement = document.querySelector(`.input-sub-nombre[data-subid="${subId}"]`);
+                const nuevoNombre = inputElement.value.trim();
+
+                if (!nuevoNombre) {
+                    alert("El nombre de la subcategoría no puede estar vacío.");
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/Categorias/EditarSubcategoriaNombre', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ Id: parseInt(subId), Nombre: nuevoNombre })
+                    });
+
+                    if (response.ok) {
+                        inputElement.classList.add("is-valid");
+                        saveSubBtn.classList.replace("btn-outline-success", "btn-success");
+                        setTimeout(() => {
+                            inputElement.classList.remove("is-valid");
+                            saveSubBtn.classList.replace("btn-success", "btn-outline-success");
+                        }, 1500);
+                    } else {
+                        alert("Error al intentar renombrar la subcategoría.");
+                    }
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+
+            // 3. ELIMINAR SUBCATEGORÍA
+            const delSubBtn = e.target.closest(".btn-eliminar-sub");
+            if (delSubBtn) {
+                const subId = delSubBtn.getAttribute("data-subid");
+                if (confirm("¿Estás seguro de que deseas eliminar esta subcategoría?")) {
+                    try {
+                        const response = await fetch(`/Categorias/EliminarSubcategoria/${subId}`, { method: 'POST' });
+                        if (response.ok) {
+                            document.getElementById(`subrow-${subId}`).remove();
+                            if (document.getElementById("subcategoriasEditLista").children.length === 0) {
+                                document.getElementById("subcategoriasEditLista").innerHTML = '<p class="text-muted text-center p-2 mb-0 small">Sin subcategorías registradas.</p>';
+                            }
+                        }
+                    } catch (err) {
+                        console.error(err);
+                    }
+                }
+            }
+
+            // 4. NUEVO: CONTROLAR LA APERTURA DEL MODAL PARA BORRAR CATEGORÍA COMPLETA
+            const deleteBtn = e.target.closest(".open-delete-modal");
+            if (deleteBtn) {
+                e.preventDefault();
+
+                const catId = deleteBtn.getAttribute("data-id");
+                const catNombre = deleteBtn.getAttribute("data-nombre");
+                const subCount = parseInt(deleteBtn.getAttribute("data-subcount") || "0");
+
+                // Inserta la información en los inputs y textos del modal de confirmación
+                document.getElementById("DeleteCategoriaId").value = catId;
+                document.getElementById("DeleteCategoriaNombre").textContent = catNombre;
+
+                const advertenciaElement = document.getElementById("DeleteCategoriaAdvertencia");
+                if (subCount > 0) {
+                    advertenciaElement.textContent = `Atención: Esta acción es irreversible. Se borrarán automáticamente las ${subCount} subcategorías vinculadas.`;
+                } else {
+                    advertenciaElement.textContent = "Esta acción es irreversible y removerá la categoría de forma permanente del sistema.";
+                }
+
+                // Abre el modal de confirmación de borrado
+                const modal = new bootstrap.Modal(document.getElementById("ModalEliminarCategoria"));
+                modal.show();
+
+                // Cierra el menú de engrane flotante
+                deleteBtn.closest(".settings-menu").style.display = "none";
+            }
+        });
+
+    </script>
+}
+<style>
+    /* Contenedor flexible de las etiquetas */
+    .subcategorias-container {
+        max-height: 120px; /* Limita la altura si hay demasiadas subcategorías */
+        overflow-y: auto; /* Agrega scroll sutil si supera el límite */
+        padding-right: 4px;
+    }
+
+    /* Estilo personalizado de barra de desplazamiento para el contenedor */
+    .subcategorias-container::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .subcategorias-container::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+    }
+
+    /* Diseño de la etiqueta individual (Badge) */
+    .subcategoria-badge {
+        background: rgba(0, 123, 255, 0.06); /* Fondo azul extremadamente sutil */
+        color: #2c3e50; /* Color de texto corporativo legible */
+        border: 1px solid rgba(0, 123, 255, 0.15);
+        padding: 6px 12px;
+        border-radius: 20px; /* Bordes completamente redondeados */
+        font-size: 0.82rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        cursor: default;
+        user-select: none;
+        /* Mantiene las etiquetas por debajo del menú flotante */
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Efecto al pasar el mouse por encima de la subcategoría */
+    .subcategoria-badge:hover {
+        background: rgba(0, 123, 255, 0.12);
+        border-color: rgba(0, 123, 255, 0.3);
+        transform: scale(1.03);
+        color: #0056b3;
+    }
+
+    .categoria-card {
+        border-radius: 15px;
+        transition: transform .2s ease, box-shadow .2s ease;
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(6px);
+    }
+
+        .categoria-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+</style>

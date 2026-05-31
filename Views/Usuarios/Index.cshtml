@@ -1,0 +1,425 @@
+﻿@using System.IO
+@model IEnumerable<ITSystem.Models.Usuarios>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<div class="container-fluid">
+
+    <div class="card rounded rounded-3 title-glass p-3">
+        <div class="card mb-4 p-3 shadow-lg border-1 rounded-pill title-glass">
+            <h2 class="m-0 text-start fw-bold">Gestión de Usuarios</h2>
+        </div>
+
+        <div class="row mb-4 align-items-center">
+            <div class="col-auto">
+                <button class="btn btn-success rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#ModalNuevoUsuario">
+                    <i class="fas fa-user-plus"></i> Nuevo Usuario
+                </button>
+            </div>
+            <div class="col">
+                <input type="text" id="searchInput" class="form-control rounded-pill" placeholder="Buscar usuario...">
+            </div>
+        </div>
+
+        <div class="row g-4 align-content-center">
+            @foreach (var u in Model)
+            {
+                string basePath = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images");
+                string finalImg = Url.Content("~/images/default.png");
+
+                string png = System.IO.Path.Combine(basePath, $"{u.NumeroEmpleado}.png");
+                string jpg = System.IO.Path.Combine(basePath, $"{u.NumeroEmpleado}.jpg");
+                string jpeg = System.IO.Path.Combine(basePath, $"{u.NumeroEmpleado}.jpeg");
+
+                if (System.IO.File.Exists(png))
+                    finalImg = Url.Content($"~/images/{u.NumeroEmpleado}.png");
+                else if (System.IO.File.Exists(jpg))
+                    finalImg = Url.Content($"~/images/{u.NumeroEmpleado}.jpg");
+                else if (System.IO.File.Exists(jpeg))
+                    finalImg = Url.Content($"~/images/{u.NumeroEmpleado}.jpeg");
+
+                <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                    <div class="card card-area shadow-sm p-3 text-center position-relative">
+                        <!-- Botón de engrane -->
+                        <button class="settings-btn">
+                            <i class="fas fa-cog"></i>
+                        </button>
+
+                        <!-- Menú flotante -->
+                        <div class="settings-menu">
+                            <a href="#" class="edit-user" data-id="@u.ID"><i class="fas fa-edit"></i> Editar</a>
+                            <a href="#" class="delete-user text-danger" data-id="@u.ID" data-nombre="@u.Nombre"><i class="fas fa-trash"></i> Eliminar</a>
+                        </div>
+                        <img src="@u.Foto" class="profile-img mb-3" alt="Foto de @u.Nombre">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold">@u.Nombre</h5>
+                            <p class="card-text mb-1"><strong>Correo:</strong> @u.Correo</p>
+                            <p class="card-text mb-1"><strong>No. Empleado:</strong> @u.NumeroEmpleado</p>
+                            <p class="card-text mb-1">
+                                <strong>Área:</strong>
+                                @{
+                                    var area = (ViewBag.Areas as List<ITSystem.Models.Areas>)
+                                    .FirstOrDefault(a => a.ID == u.AreaID);
+                                    @area?.Nombre
+                                }
+                            </p>
+                            <p class="card-text"><strong>Rol:</strong> @u.Rol</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Usuario -->
+<div class="modal fade" id="ModalNuevoUsuario" tabindex="-1" aria-labelledby="ModalNuevoUsuarioLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <!-- Header -->
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="ModalNuevoUsuarioLabel">Agregar Nuevo Usuario</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body title-glass">
+                <form id="formNuevoUsuario" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="Nombre" class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="Nombre" name="Nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="Correo" class="form-label">Correo</label>
+                        <input type="email" class="form-control" id="Correo" name="Correo" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="NumeroEmpleado" class="form-label">Número de Empleado</label>
+                        <input type="number" class="form-control" id="NumeroEmpleado" name="NumeroEmpleado" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="AreaID" class="form-label">Área</label>
+                        <select class="form-select" id="AreaID" name="AreaID" required>
+                            <option value="">Seleccione un área...</option>
+                            @foreach (var area in ViewBag.Areas as List<ITSystem.Models.Areas>)
+                            {
+                                <option value="@area.ID">@area.Nombre</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="Rol" class="form-label">Rol</label>
+                        <select class="form-select" id="Rol" name="Rol" required>
+                            <option value="">Seleccione...</option>
+                            <option value="Solicitante">Solicitante</option>
+                            <option value="Tecnico">Tecnico</option>
+                            <option value="Admin">Admin</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="Password" class="form-label">Contraseña</label>
+                        <input type="password" class="form-control" id="Password" name="Password" required minlength="6">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="FotoFile" class="form-label">Foto (opcional)</label>
+                        <input type="file" class="form-control" id="FotoFile" name="FotoFile" accept="image/*">
+                    </div>
+                </form>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer">
+                <button type="submit" form="formNuevoUsuario" class="btn btn-success rounded-pill">Guardar</button>
+                <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Usuario -->
+<div class="modal fade" id="ModalEditarUsuario" tabindex="-1" aria-labelledby="ModalEditarUsuarioLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <!-- Header -->
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="ModalEditarUsuarioLabel">Editar Usuario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body">
+                <form id="formEditarUsuario" enctype="multipart/form-data">
+                    <input type="hidden" id="EditID" name="ID">
+
+                    <div class="mb-3">
+                        <label for="EditNombre" class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="EditNombre" name="Nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="EditCorreo" class="form-label">Correo</label>
+                        <input type="email" class="form-control" id="EditCorreo" name="Correo" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="EditNumeroEmpleado" class="form-label">Número de Empleado</label>
+                        <input type="number" class="form-control" id="EditNumeroEmpleado" name="NumeroEmpleado" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="EditAreaID" class="form-label">Área</label>
+                        <select class="form-select" id="EditAreaID" name="AreaID" required>
+                            <option value="">Seleccione un área...</option>
+                            @foreach (var area in ViewBag.Areas as List<ITSystem.Models.Areas>)
+                            {
+                                <option value="@area.ID">@area.Nombre</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="EditRol" class="form-label">Rol</label>
+                        <select class="form-select" id="EditRol" name="Rol" required>
+                            <option value="">Seleccione...</option>
+                            <option value="Solicitante">Solicitante</option>
+                            <option value="Tecnico">Tecnico</option>
+                            <option value="Admin">Admin</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="EditPassword" class="form-label">Nueva Contraseña (dejar en blanco para mantener la actual)</label>
+                        <input type="password" class="form-control" id="EditPassword" name="Password" minlength="6">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="EditFotoFile" class="form-label">Foto (opcional)</label>
+                        <input type="file" class="form-control" id="EditFotoFile" name="FotoFile" accept="image/*">
+                    </div>
+                </form>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer">
+                <button type="submit" form="formEditarUsuario" class="btn btn-warning rounded-pill">Guardar cambios</button>
+                <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmar Eliminación -->
+<div class="modal fade" id="ModalEliminarUsuario" tabindex="-1" aria-labelledby="ModalEliminarUsuarioLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <!-- Header -->
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="ModalEliminarUsuarioLabel">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body">
+                <p id="deleteMessage"></p>
+                <input type="hidden" id="DeleteID">
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger rounded-pill" id="btnConfirmDelete">Eliminar</button>
+                <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section scripts{
+    <!-- Modal para generar nuevo usuario -->
+    <script>
+        document.getElementById("formNuevoUsuario").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+
+            fetch('/Usuarios/Create', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    var modal = bootstrap.Modal.getInstance(document.getElementById('ModalNuevoUsuario'));
+                    modal.hide();
+                    this.reset();
+                    location.reload();
+                } else {
+                    alert("Error al guardar el usuario.");
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+
+    <!-- Barra de busqueda -->
+    <script>
+        const container = document.querySelector(".row.g-4"); 
+        const originalCards = Array.from(container.children); // guardamos el orden original
+
+        document.getElementById("searchInput").addEventListener("keyup", function () {
+            var filter = this.value.toLowerCase();
+            var cards = Array.from(container.querySelectorAll(".col-12, .col-sm-6, .col-md-4, .col-lg-3"));
+
+            if (filter.trim() !== "") {
+                // Filtrar las que coinciden
+                var matching = cards.filter(card => card.innerText.toLowerCase().includes(filter));
+
+                // Ocultar las que no coinciden
+                cards.forEach(card => {
+                    if (!matching.includes(card)) {
+                        card.style.display = "none";
+                    } else {
+                        card.style.display = "";
+                    }
+                });
+
+                // Mover las coincidentes al inicio
+                matching.forEach(card => {
+                    container.insertBefore(card, container.firstChild);
+                });
+            } else {
+                // Restaurar todas las cards y su orden original
+                container.innerHTML = "";
+                originalCards.forEach(card => {
+                    card.style.display = "";
+                    container.appendChild(card);
+                });
+            }
+        });
+
+    </script>
+
+    <!-- Boton desplegable de tuerca -->
+    <script>
+    document.addEventListener("click", function (e) {
+        const btn = e.target.closest(".settings-btn");
+        const menus = document.querySelectorAll(".settings-menu");
+
+        if (btn) {
+            const menu = btn.parentElement.querySelector(".settings-menu");
+
+            // Si el menú ya está visible, lo cerramos
+            if (menu.style.display === "block") {
+                menu.style.display = "none";
+            } else {
+                // Cerramos todos los demás menús
+                menus.forEach(m => m.style.display = "none");
+                // Abrimos el menú del engrane clicado
+                menu.style.display = "block";
+            }
+
+            e.stopPropagation();
+        } else {
+            // Cerrar todos los menús si se hace clic fuera
+            menus.forEach(m => m.style.display = "none");
+        }
+    });
+    </script>
+
+    <!-- Modal para editar usuarios -->
+    <script>
+    document.addEventListener("click", function (e) {
+        const editBtn = e.target.closest(".edit-user");
+        if (editBtn) {
+            e.preventDefault();
+            const userId = editBtn.dataset.id;
+
+            // Llamada AJAX para obtener datos del usuario
+            fetch(`/Usuarios/GetById/${userId}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Llenar los campos del modal
+                    document.getElementById("EditID").value = data.id;
+                    document.getElementById("EditNombre").value = data.nombre;
+                    document.getElementById("EditCorreo").value = data.correo;
+                    document.getElementById("EditNumeroEmpleado").value = data.numeroEmpleado;
+                    document.getElementById("EditAreaID").value = data.areaID;
+                    document.getElementById("EditRol").value = data.rol;
+
+                    // Abrir el modal
+                    var modal = new bootstrap.Modal(document.getElementById('ModalEditarUsuario'));
+                    modal.show();
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    });
+
+    // Guardar cambio
+        document.getElementById("formEditarUsuario").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+
+            fetch('/Usuarios/Edit', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    var modal = bootstrap.Modal.getInstance(document.getElementById('ModalEditarUsuario'));
+                    modal.hide();
+                    this.reset();
+                    location.reload();
+                } else {
+                    alert(data.message || "Error al actualizar el usuario.");
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+    </script>
+
+    <!-- Modal para eliminar usuario -->
+    <script>
+    document.addEventListener("click", function (e) {
+        const deleteBtn = e.target.closest(".delete-user");
+        if (deleteBtn) {
+            e.preventDefault();
+            const userId = deleteBtn.dataset.id;
+            const userName = deleteBtn.dataset.nombre;
+
+            // Guardamos el ID y mostramos el nombre en el mensaje
+            document.getElementById("DeleteID").value = userId;
+            document.getElementById("deleteMessage").innerText = 
+                `¿Estás seguro de que deseas eliminar a ${userName}?`;
+
+            // Abrimos el modal
+            var modal = new bootstrap.Modal(document.getElementById('ModalEliminarUsuario'));
+            modal.show();
+        }
+    });
+
+    // Confirmar eliminación
+    document.getElementById("btnConfirmDelete").addEventListener("click", function () {
+        const userId = document.getElementById("DeleteID").value;
+
+        fetch(`/Usuarios/Delete/${userId}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                var modal = bootstrap.Modal.getInstance(document.getElementById('ModalEliminarUsuario'));
+                modal.hide();
+                location.reload();
+            } else {
+                alert("Error al eliminar el usuario.");
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    });
+    </script>
+}

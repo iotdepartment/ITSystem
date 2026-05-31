@@ -1,0 +1,431 @@
+﻿@model IEnumerable<ITSystem.Models.Tickets>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<div class="container-fluid">
+    <!-- Barra de herramientas (Botón y Buscador) -->
+    <div class="card title-glass rounded rounded-3 p-3 mb-4">
+        <div class="row align-items-center mb-4">
+            <div class="col-auto">
+                <button class="btn btn-success rounded-pill border-1 px-4" data-bs-toggle="modal" data-bs-target="#ModalNuevoTicket">
+                    <i class="fas fa-plus-circle me-1"></i> Nuevo Ticket
+                </button>
+            </div>
+            <div class="col">
+                <input type="text" id="searchInput" class="form-control border-1 rounded-pill" placeholder="Buscar ticket por folio, descripción o solicitante...">
+            </div>
+        </div>
+
+
+        <!-- SECCIÓN DE CARDS DE TICKETS -->
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4" id="ticketsContainer">
+            @if (Model != null && Model.Any())
+            {
+                foreach (var ticket in Model)
+                {
+                    <!-- Badge de color según el estado -->
+                    var bgEstado = ticket.Estado == "Nuevo" ? "bg-success" :
+                    ticket.Estado == "En Proceso" ? "bg-warning text-dark" : "bg-secondary";
+
+                    <div class="col ticket-item">
+                        <div class="card h-100 card-area shadow-sm border-1 rounded-3 card-ticket">
+                            <!-- Cabecera de la Tarjeta -->
+                            <div class="card-header bg-primary d-flex justify-content-between align-items-center border-0 py-3">
+                                <span class="fw-bold text-light small"><i class="fas fa-hashtag"></i> @ticket.Folio</span>
+                                <span class="badge @bgEstado rounded-pill px-3">@ticket.Estado</span>
+                            </div>
+
+                            <!-- Cuerpo de la Tarjeta -->
+                            <div class="card-body">
+                                <!-- Categoría y Subcategoría -->
+                                <h6 class="card-subtitle mb-2 text-primary fw-bold">
+                                    <i class="fas fa-folder me-1"></i> @(ticket.Categoria?.Nombre ?? "Sin Categoría")
+                                    <small class="text-muted fw-normal"> / @(ticket.Subcategoria?.Nombre ?? "General")</small>
+                                </h6>
+
+                                <!-- Descripción del Ticket -->
+                                <p class="card-text text-dark text-truncate-2 descripcion-ticket" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 48px;">
+                                    @ticket.Descripcion
+                                </p>
+
+                                <hr class="text-muted opacity-25 my-2">
+
+                                <!-- Información Detallada (Fila inferior) -->
+                                <div class="row align-items-center g-2 small text-muted">
+                                    <!-- LADO IZQUIERDO: Foto y Nombre del Solicitante -->
+                                    <div class="col-7 d-flex align-items-center gap-2">
+                                        @if (ticket.UsuarioSolicitante != null && ticket.UsuarioSolicitante.NumeroEmpleado.HasValue)
+                                        {
+                                            <!-- Contenedor relativo para controlar la exclusión visual -->
+                                            <div class="d-flex align-items-center position-relative" style="width: 28px; height: 28px;">
+                                                <!-- La imagen se muestra por defecto -->
+                                                <img src="/Images/@(ticket.UsuarioSolicitante.NumeroEmpleado).jpg"
+                                                     alt="Foto"
+                                                     class="rounded-circle border position-absolute top-0 start-0"
+                                                     style="width: 28px; height: 28px; object-fit: cover; z-index: 2;"
+                                                     onerror="this.style.display='none'; document.getElementById('avatar-@ticket.Id').style.setProperty('display', 'flex', 'important');" />
+
+                                                <!-- El avatar inicia oculto (display: none) y solo se activa si la imagen falla -->
+                                                <div id="avatar-@ticket.Id" class="rounded-circle bg-success text-white align-items-center justify-content-center fw-bold text-uppercase position-absolute top-0 start-0"
+                                                     style="width: 28px; height: 28px; font-size: 0.75rem; min-width: 28px; display: none; z-index: 1;">
+                                                    @(ticket.UsuarioSolicitante?.Nombre?.Substring(0, 1) ?? "U")
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <!-- Círculo por defecto si no hay datos del empleado -->
+                                            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold text-uppercase"
+                                                 style="width: 28px; height: 28px; font-size: 0.75rem; min-width: 28px;">
+                                                @(ticket.UsuarioSolicitante?.Nombre?.Substring(0, 1) ?? "U")
+                                            </div>
+                                        }
+                                        <!-- Nombre del Solicitante -->
+                                        <span class="solicitante-ticket text-truncate fw-semibold" title="@(ticket.UsuarioSolicitante?.Nombre ?? "Anónimo")">
+                                            @(ticket.UsuarioSolicitante?.Nombre ?? "Anónimo")
+                                        </span>
+                                    </div>
+
+                                    <!-- LADO DERECHO: Área -->
+                                    <div class="col-5 text-end text-truncate fw-semibold">
+                                        <i class="fas fa-layer-group me-1"></i> @(ticket.Area?.Nombre ?? "N/A")
+                                    </div>
+
+                                    <!-- FECHA -->
+                                    <div class="col-12 mt-1 pt-1 border-top border-light text-muted" style="font-size: 0.75rem;">
+                                        <i class="far fa-calendar-alt me-1"></i>
+                                        @(ticket.FechaCreacion.HasValue? ticket.FechaCreacion.Value.ToString("dd/MM/yyyy hh:mm tt") : "Sin fecha")
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <!-- Pie de la Tarjeta (Acciones) -->
+                            <div class="card-footer border-0 d-flex justify-content-end pb-3">
+                                <!-- Reemplaza el botón anterior en tu card por este -->
+                                <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 btn-ver-detalles" data-id="@ticket.Id">
+                                    <i class="fas fa-eye me-1"></i> Ver Detalles
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="col-12 text-center my-5">
+                    <i class="fas fa-ticket-alt fa-3x text-muted mb-3"></i>
+                    <p class="text-muted fs-5">No se encontraron tickets registrados.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- ESTRUCTURA DEL MODAL NUEVO TICKET -->
+<div class="modal fade" id="ModalNuevoTicket" tabindex="-1" aria-labelledby="modalTicketLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content rounded-3 shadow">
+
+            <!-- Encabezado -->
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold" id="modalTicketLabel">
+                    <i class="fas fa-ticket-alt me-2"></i> Generar Nuevo Ticket
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Formulario conectado a tu controlador -->
+            <form asp-action="Crear" asp-controller="Tickets" method="post">
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+
+                        <!-- Área (Ahora ocupa toda la fila al remover el solicitante manual) -->
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Área</label>
+                            <select class="form-select rounded-pill" name="AreaId" asp-items="ViewBag.Areas" required>
+                                <option value="">Seleccione un área...</option>
+                            </select>
+                        </div>
+
+                        <!-- Categoría -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Categoría</label>
+                            <select id="selectCategoria" class="form-select rounded-pill" name="CategoriaId" asp-items="ViewBag.Categorias" required>
+                                <option value="">Seleccione una categoría...</option>
+                            </select>
+                        </div>
+
+                        <!-- Subcategoría -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Subcategoría</label>
+                            <select id="selectSubcategoria" class="form-select rounded-pill" name="SubcategoriaId" disabled>
+                                <option value="">Seleccione una subcategoría...</option>
+                            </select>
+                        </div>
+
+                        <!-- Descripción -->
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Descripción del Problema</label>
+                            <textarea class="form-control" name="Descripcion" rows="3" placeholder="Describe la falla o solicitud..." required></textarea>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div class="modal-footer bg-light">
+                    <button type="submit" class="btn btn-success rounded-pill px-4"><i class="fas fa-save me-1"></i> Generar Ticket</button>
+                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- MODAL DETALLES DE TICKET -->
+<div class="modal fade" id="ModalDetallesTicket" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content rounded-3 shadow">
+
+            <!-- Encabezado del Modal -->
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-info-circle me-2"></i> Detalles del Ticket: <span id="lblFolio"></span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Cuerpo del Modal -->
+            <div class="modal-body p-4">
+                <div class="row g-3">
+
+                    <!-- Estado -->
+                    <div class="col-md-4">
+                        <label class="text-muted small fw-bold d-block">Estado</label>
+                        <span id="lblEstado" class="badge rounded-pill px-3 fs-6 mt-1"></span>
+                    </div>
+
+                    <!-- Fecha de Creación -->
+                    <div class="col-md-4">
+                        <label class="text-muted small fw-bold d-block">Fecha de Creación</label>
+                        <span id="lblFecha" class="text-dark fw-semibold d-block mt-1"></span>
+                    </div>
+
+                    <!-- Área -->
+                    <div class="col-md-4">
+                        <label class="text-muted small fw-bold d-block">Área</label>
+                        <span id="lblArea" class="text-dark fw-semibold d-block mt-1"></span>
+                    </div>
+
+                    <hr class="my-2 opacity-25">
+
+                    <!-- Categoría / Subcategoría -->
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-bold d-block">Categoría / Subcategoría</label>
+                        <span id="lblCategoriaSub" class="text-dark fw-semibold d-block mt-1"></span>
+                    </div>
+
+                    <!-- Solicitante (CON FOTO INTEGRADA) -->
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-bold d-block">Solicitante</label>
+                        <div class="d-flex align-items-center gap-2 mt-1">
+                            <!-- Contenedor de la foto del usuario -->
+                            <div class="position-relative" style="width: 32px; height: 32px; min-width: 32px;">
+                                <!-- Imagen que busca el archivo .jpg -->
+                                <img id="imgDetalleUsuario" src="" alt="Foto" class="rounded-circle border" style="width: 32px; height: 32px; object-fit: cover; display: none;" />
+
+                                <!-- Inicial de respaldo si no hay foto física -->
+                                <div id="avatarDetalleUsuario" class="rounded-circle bg-success text-white align-items-center justify-content-center fw-bold text-uppercase" style="width: 32px; height: 32px; font-size: 0.85rem; display: none;"></div>
+                            </div>
+                            <!-- Nombre del empleado -->
+                            <span id="lblSolicitante" class="text-dark fw-semibold text-truncate"></span>
+                        </div>
+                    </div>
+
+                    <!-- Especialista Asignado -->
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-bold d-block">Especialista Asignado</label>
+                        <span id="lblAsignado" class="text-dark fw-semibold d-block mt-1"></span>
+                    </div>
+
+                    <hr class="my-2 opacity-25">
+
+                    <!-- Descripción del Problema -->
+                    <div class="col-12">
+                        <label class="text-muted small fw-bold d-block mb-1">Descripción del Problema</label>
+                        <div class="p-3 bg-light rounded border text-dark" id="lblDescripcion" style="white-space: pre-wrap; min-height: 60px;"></div>
+                    </div>
+
+                    <!-- Notas / Comentarios -->
+                    <div class="col-12">
+                        <label class="text-muted small fw-bold d-block mb-1">Notas / Comentarios Iniciales</label>
+                        <div class="p-3 bg-light rounded border text-muted small" id="lblComentarios" style="white-space: pre-wrap; min-height: 45px;"></div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Pie del Modal -->
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts {
+    <script>
+        document.getElementById('selectCategoria').addEventListener('change', async function () {
+            const categoriaId = this.value;
+            const selectSubcategoria = document.getElementById('selectSubcategoria');
+
+            // Limpiar opciones anteriores
+            selectSubcategoria.innerHTML = '<option value="">Seleccione una subcategoría...</option>';
+
+            if (!categoriaId) {
+                selectSubcategoria.disabled = true;
+                return;
+            }
+
+            try {
+                // Petición al controlador pasando el ID elegido
+                const response = await fetch(`/Tickets/GetSubcategorias?categoriaId=${categoriaId}`);
+                if (!response.ok) throw new Error('Error al obtener subcategorías');
+
+                const data = await response.json();
+
+                // Llenar el select con los datos obtenidos
+                if (data.length > 0) {
+                    data.forEach(sub => {
+                        const option = document.createElement('option');
+                        option.value = sub.id;
+                        option.textContent = sub.nombre;
+                        selectSubcategoria.appendChild(option);
+                    });
+                    selectSubcategoria.disabled = false;
+                } else {
+                    selectSubcategoria.innerHTML = '<option value="">No hay subcategorías disponibles</option>';
+                    selectSubcategoria.disabled = true;
+                }
+            } catch (error) {
+                console.error(error);
+                selectSubcategoria.innerHTML = '<option value="">Error al cargar datos</option>';
+                selectSubcategoria.disabled = true;
+            }
+        });
+    </script>
+
+    <script>
+        document.getElementById('searchInput').addEventListener('input', function () {
+            const filter = this.value.toLowerCase();
+            const items = document.querySelectorAll('.ticket-item');
+
+            items.forEach(item => {
+                // Campos por los que queremos buscar
+                const folio = item.querySelector('.card-header span').textContent.toLowerCase();
+                const descripcion = item.querySelector('.descripcion-ticket').textContent.toLowerCase();
+                const solicitante = item.querySelector('.solicitante-ticket').textContent.toLowerCase();
+
+                if (folio.includes(filter) || descripcion.includes(filter) || solicitante.includes(filter)) {
+                    item.style.display = ""; // Mostrar
+                } else {
+                    item.style.display = "none"; // Ocultar
+                }
+            });
+        });
+
+    </script>
+
+    <script>
+        // 1. INSTANCIAR EL MODAL DE DETALLES DE BOOTSTRAP
+        const modalDetalles = new bootstrap.Modal(document.getElementById('ModalDetallesTicket'));
+
+        // 2. LOGICÁ DE BÚSQUEDA EN TIEMPO REAL PARA LAS CARDS COMPACTAS
+        document.getElementById('searchInput').addEventListener('input', function () {
+            const filter = this.value.toLowerCase();
+            const items = document.querySelectorAll('.ticket-item');
+
+            items.forEach(item => {
+                const folio = item.querySelector('.card-header span').textContent.toLowerCase();
+                const descripcion = item.querySelector('.descripcion-ticket').textContent.toLowerCase();
+                const solicitante = item.querySelector('.solicitante-ticket').textContent.toLowerCase();
+
+                // Si coincide con cualquiera de los tres campos, se mantiene visible
+                if (folio.includes(filter) || descripcion.includes(filter) || solicitante.includes(filter)) {
+                    item.style.display = "";
+                } else {
+                    item.style.display = "none";
+                }
+            });
+        });
+
+        // 3. ESCUCHAR CLICS EN LOS BOTONES "VER DETALLES" (CON MANEJO DE FOTO EN MODAL)
+        document.addEventListener('click', async function (e) {
+            // Verifica si el clic fue en el botón o en el icono interno del botón
+            if (e.target && e.target.classList.contains('btn-ver-detalles') || e.target.closest('.btn-ver-detalles')) {
+                const boton = e.target.classList.contains('btn-ver-detalles') ? e.target : e.target.closest('.btn-ver-detalles');
+                const ticketId = boton.getAttribute('data-id');
+
+                try {
+                    // Consulta asíncrona al controlador
+                    const response = await fetch(`/Tickets/GetDetallesJson?id=${ticketId}`);
+                    if (!response.ok) throw new Error('No se pudieron obtener los detalles.');
+
+                    const ticket = await response.json();
+
+                    // Rellenar textos planos en el HTML del modal
+                    document.getElementById('lblFolio').textContent = ticket.folio;
+                    document.getElementById('lblFecha').textContent = ticket.fecha;
+                    document.getElementById('lblArea').textContent = ticket.area;
+                    document.getElementById('lblCategoriaSub').textContent = `${ticket.categoria} / ${ticket.subcategoria}`;
+                    document.getElementById('lblSolicitante').textContent = ticket.solicitante;
+                    document.getElementById('lblAsignado').textContent = ticket.asignado;
+                    document.getElementById('lblDescripcion').textContent = ticket.descripcion;
+                    document.getElementById('lblComentarios').textContent = ticket.comentarios;
+
+                    // Control de Estilos del Badge de Estado
+                    const badge = document.getElementById('lblEstado');
+                    badge.textContent = ticket.estado;
+                    badge.className = "badge rounded-pill px-3 fs-6 mt-1 " +
+                        (ticket.estado === "Nuevo" ? "bg-success" :
+                         ticket.estado === "En Proceso" ? "bg-warning text-dark" : "bg-secondary");
+
+                    // MANEJO EXCLUSIVO DE LA FOTO POR NÚMERO DE EMPLEADO
+                    const imgModal = document.getElementById('imgDetalleUsuario');
+                    const avatarModal = document.getElementById('avatarDetalleUsuario');
+
+                    if (ticket.numeroEmpleado) {
+                        // Intentamos apuntar al archivo .jpg
+                        imgModal.src = `/Images/${ticket.numeroEmpleado}.jpg`;
+                        imgModal.style.display = "block";
+                        avatarModal.style.display = "none";
+
+                        // Si el archivo físico .jpg no existe, se dispara esta cascada estética
+                        imgModal.onerror = function() {
+                            this.style.display = "none";
+                            avatarModal.textContent = (ticket.solicitante || "U").substring(0, 1).toUpperCase();
+                            avatarModal.style.setProperty('display', 'flex', 'important');
+                        };
+                    } else {
+                        // En caso de que el usuario no tenga Número de Empleado asignado en BD
+                        imgModal.style.display = "none";
+                        avatarModal.textContent = (ticket.solicitante || "U").substring(0, 1).toUpperCase();
+                        avatarModal.style.setProperty('display', 'flex', 'important');
+                    }
+
+                    // Levantar y desplegar el modal en pantalla de forma limpia
+                    modalDetalles.show();
+
+                } catch (error) {
+                    console.error(error);
+                    alert('Ocurrió un inconveniente al cargar el resumen detallado del ticket.');
+                }
+            }
+        });
+    </script>
+}
