@@ -24,8 +24,8 @@
         <div class="row g-4 align-content-center">
             @foreach (var u in Model)
             {
-                string basePath = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Images");
-                string finalImg = Url.Content("~/Images/default.png");
+                string basePath = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "/Images");
+                string finalImg = Url.Content("/Images/default.png");
 
                 string png = System.IO.Path.Combine(basePath, $"{u.NumeroEmpleado}.png");
                 string jpg = System.IO.Path.Combine(basePath, $"{u.NumeroEmpleado}.jpg");

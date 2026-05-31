@@ -148,14 +148,14 @@ namespace ITSystem.Controllers
                 if (usuarioModificado.FotoFile != null && usuarioModificado.FotoFile.Length > 0)
                 {
                     var fileName = usuarioModificado.NumeroEmpleado + Path.GetExtension(usuarioModificado.FotoFile.FileName);
-                    var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", fileName);
+                    var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Images", fileName);
 
                     using (var stream = new FileStream(path, FileMode.Create))
                     {
                         await usuarioModificado.FotoFile.CopyToAsync(stream);
                     }
 
-                    usuarioDB.Foto = "/images/" + fileName;
+                    usuarioDB.Foto = "/Images/" + fileName;
                 }
 
                 // 5. Guardar los cambios en la base de datos
