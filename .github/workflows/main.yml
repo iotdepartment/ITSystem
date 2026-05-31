@@ -24,4 +24,4 @@ jobs:
       with:
         context: .
         push: true
-        tags: iotdepartment/ITSystem:latest
+        tags: iotdepartment/itsystem:latest
