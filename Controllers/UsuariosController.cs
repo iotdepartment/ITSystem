@@ -21,7 +21,7 @@ namespace ITSystem.Controllers
 
             foreach (var u in usuarios)
             {
-                string basePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images");
+                string basePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Images");
 
                 string png = Path.Combine(basePath, $"{u.NumeroEmpleado}.png");
                 string jpg = Path.Combine(basePath, $"{u.NumeroEmpleado}.jpg");
