@@ -32,11 +32,11 @@
                 string jpeg = System.IO.Path.Combine(basePath, $"{u.NumeroEmpleado}.jpeg");
 
                 if (System.IO.File.Exists(png))
-                    finalImg = Url.Content($"~/Images/{u.NumeroEmpleado}.png");
+                    finalImg = Url.Content($"/Images/{u.NumeroEmpleado}.png");
                 else if (System.IO.File.Exists(jpg))
-                    finalImg = Url.Content($"~/Images/{u.NumeroEmpleado}.jpg");
+                    finalImg = Url.Content($"/Images/{u.NumeroEmpleado}.jpg");
                 else if (System.IO.File.Exists(jpeg))
-                    finalImg = Url.Content($"~/Images/{u.NumeroEmpleado}.jpeg");
+                    finalImg = Url.Content($"/Images/{u.NumeroEmpleado}.jpeg");
 
                 <div class="col-12 col-sm-6 col-md-4 col-lg-3">
                     <div class="card card-area shadow-sm p-3 text-center position-relative">
