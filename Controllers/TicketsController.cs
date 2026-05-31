@@ -56,7 +56,7 @@ namespace ITSystem.Controllers
             {
                 // Si no hay sesión activa, redirigir al login o mandar error en lugar de asignar el ID 1
                 TempData["ErrorMessage"] = "Su sesión ha expirado. Por favor, inicie sesión nuevamente.";
-                return RedirectToAction("Login", "Account"); // Ajusta el nombre de tu controlador de Login si varía
+                return RedirectToAction("Login", "Index"); // Ajusta el nombre de tu controlador de Login si varía
             }
 
             // Remover validaciones automáticas de propiedades de navegación para evitar conflictos en el ModelState
