@@ -28,13 +28,13 @@ namespace ITSystem.Controllers
                 string jpeg = Path.Combine(basePath, $"{u.NumeroEmpleado}.jpeg");
 
                 if (System.IO.File.Exists(png))
-                    u.Foto = $"/images/{u.NumeroEmpleado}.png";
+                    u.Foto = $"/Images/{u.NumeroEmpleado}.png";
                 else if (System.IO.File.Exists(jpg))
-                    u.Foto = $"/images/{u.NumeroEmpleado}.jpg";
+                    u.Foto = $"/Images/{u.NumeroEmpleado}.jpg";
                 else if (System.IO.File.Exists(jpeg))
-                    u.Foto = $"/images/{u.NumeroEmpleado}.jpeg";
+                    u.Foto = $"/Images/{u.NumeroEmpleado}.jpeg";
                 else
-                    u.Foto = "/images/default.png";
+                    u.Foto = "/Images/default.png";
             }
 
             return View(usuarios);
@@ -71,11 +71,11 @@ namespace ITSystem.Controllers
                             await usuario.FotoFile.CopyToAsync(stream);
                         }
 
-                        usuario.Foto = "/images/" + fileName;
+                        usuario.Foto = "/Images/" + fileName;
                     }
                     else
                     {
-                        usuario.Foto = "/images/default.png";
+                        usuario.Foto = "/Images/default.png";
                     }
 
                     _context.Add(usuario);
