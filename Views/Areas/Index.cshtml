@@ -30,8 +30,12 @@
 
                         <!-- Menú flotante -->
                         <div class="settings-menu">
-                            <a href="/Areas/Edit/@area.ID">Editar</a>
-                            <a href="/Areas/Delete/@area.ID" class="text-danger">Eliminar</a>
+                            <a href="#" class="text-dark btn-open-edit" data-id="@area.ID">
+                                <i class="fas fa-edit me-2"></i>Editar
+                            </a>
+                            <a href="#" class="text-danger btn-open-delete" data-id="@area.ID" data-nombre="@area.Nombre">
+                                <i class="fas fa-trash-alt me-2"></i>Eliminar
+                            </a>
                         </div>
 
                         <div class="card-body">
@@ -72,6 +76,77 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Confirmar Eliminación de Área -->
+<div class="modal card-glass fade" id="ModalEliminarArea" tabindex="-1" aria-labelledby="ModalEliminarAreaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+
+            <!-- Header -->
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold" id="ModalEliminarAreaLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form id="formDeleteArea" method="post" action="/Areas/Delete">
+                @Html.AntiForgeryToken()
+
+                <div class="modal-body py-4">
+                    <p class="fs-5 mb-1" id="deleteMessage"></p>
+                    <p class="text-muted small">Esta acción no se puede deshacer.</p>
+                    <input type="hidden" name="id" id="DeleteID">
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="submit" class="btn btn-danger rounded-pill px-4" id="btnConfirmDelete">Eliminar</button>
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Área -->
+<div class="modal card-glass fade" id="ModalEditarArea" tabindex="-1" aria-labelledby="ModalEditarAreaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+
+            <!-- Header -->
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title fw-bold" id="ModalEditarAreaLabel">
+                    <i class="fas fa-edit me-2"></i>Editar Área
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- Formulario POST para actualizar -->
+            <form id="formEditArea" method="post" action="/Areas/Edit">
+                @Html.AntiForgeryToken() <!-- Token de seguridad indispensable -->
+                <!-- Body -->
+                <div class="modal-body py-4">
+                    <!-- ID Oculto para indicarle al servidor qué registro actualizar -->
+                    <input type="hidden" name="id" id="EditID">
+
+                    <div class="mb-3">
+                        <label for="EditNombre" class="form-label fw-bold">Nombre del Área</label>
+                        <input type="text" class="form-control rounded-pill" name="nombre" id="EditNombre" required autocomplete="off">
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="modal-footer bg-light">
+                    <button type="submit" class="btn btn-warning rounded-pill px-4">Guardar Cambios</button>
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
 
 @section Scripts {
     <script>
@@ -154,5 +229,78 @@
 
             contenedor.appendChild(card);
         }
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // ... Tu código anterior de los botones de engrane se mantiene igual ...
+
+            // Instancia del modal de Bootstrap
+            const modalEliminar = new bootstrap.Modal(document.getElementById('ModalEliminarArea'));
+
+            // Captura el clic en cualquier enlace de eliminar
+            document.querySelectorAll('.btn-open-delete').forEach(button => {
+                button.addEventListener('click', function (e) {
+                    e.preventDefault(); // Evita que la página navegue al '#'
+
+                    // Cierra el menú flotante de engrane
+                    this.closest('.settings-menu').classList.remove('show');
+
+                    // Obtiene los datos del área desde los atributos data-
+                    const areaId = this.getAttribute('data-id');
+                    const areaNombre = this.getAttribute('data-nombre');
+
+                    // Asigna los valores a los elementos dentro del modal
+                    document.getElementById('DeleteID').value = areaId;
+                    document.getElementById('deleteMessage').innerHTML = `¿Estás seguro de que deseas eliminar el área <strong>${areaNombre}</strong>?`;
+
+                    // Si tu controlador procesa la eliminación por una URL directa (GET) tipo /Areas/Delete/5
+                    // puedes cambiar dinámicamente el action del formulario descomentando la siguiente línea:
+                    // document.getElementById('formDeleteArea').action = `/Areas/Delete/${areaId}`;
+
+                    // Muestra el modal
+                    modalEliminar.show();
+                });
+            });
+        });
+
+    </script>
+
+    <script>
+        // Instancia del modal de edición de Bootstrap
+        const modalEditar = new bootstrap.Modal(document.getElementById('ModalEditarArea'));
+
+        // Captura el clic en cualquier enlace de Editar
+        document.querySelectorAll('.btn-open-edit').forEach(button => {
+            button.addEventListener('click', async function (e) {
+                e.preventDefault();
+
+                // Cierra el menú de engrane flotante
+                this.closest('.settings-menu').classList.remove('show');
+
+                const areaId = this.getAttribute('data-id');
+
+                try {
+                    // Hacemos una consulta rápida al servidor para obtener los datos de esta área en formato JSON
+                    const response = await fetch(`/Areas/GetArea/${areaId}`);
+
+                    if (!response.ok) throw new Error("No se pudieron obtener los datos.");
+
+                    const area = await response.json();
+
+                    // Rellenamos los campos del modal de edición con la respuesta del servidor
+                    document.getElementById('EditID').value = area.id; // Asegúrate de usar minúsculas/mayúsculas según devuelva tu JSON
+                    document.getElementById('EditNombre').value = area.nombre;
+
+                    // Mostramos el modal en pantalla
+                    modalEditar.show();
+
+                } catch (error) {
+                    console.error(error);
+                    alert("Error al cargar los datos del área.");
+                }
+            });
+        });
+
     </script>
 }
