@@ -73,7 +73,7 @@
         .then(data => {
             if (data.success) {
                 // Redirecciona al panel principal si las credenciales coinciden
-                window.location.href = '/Tickets/Index';
+                window.location.href = '/GestionarTickets/Index';
             } else {
                 // Muestra el mensaje de error directamente en la tarjeta de login
                 alertBox.textContent = data.message || "Credenciales incorrectas.";

@@ -1,0 +1,55 @@
+﻿@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ITSystem</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <!-- Iconos de bootstrap para el menú de usuario -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/ITSystem.styles.css" asp-append-version="true" />
+    <link rel="icon" type="image/png" href="~/Images/Logo.png" />
+</head>
+<body class="body-gradient">
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-light shadow-lg bg-secondary px-3">
+            <a class="navbar-brand ms-5" href="/Tickets/Index">
+                <img src="~/Images/Logo.png" alt="Logo" style="height:70px">
+            </a>
+            <a class="navbar-brand ms-5 fw-bold text-light" href="/Tickets2/Index">TGRMX IT Tickets System</a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto ms-5 mb-2 mb-lg-0">
+                    <li class="nav-item ms-5"><a class="nav-link text-light" href="/Tickets2/Index">Home</a></li>
+                    <li class="nav-item ms-5"><a class="nav-link text-light" href="#">Help</a></li>
+                    <li class="nav-item ms-5"><a class="nav-link text-light" href="/Login/Index">Iniciar Sesion</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container-fluid p-5">
+        <main role="main" class="pb-0">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="footer text-muted text-center">
+        <div class="container text-black fw-bold">
+            © TGRMX Iot Department 2026
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
