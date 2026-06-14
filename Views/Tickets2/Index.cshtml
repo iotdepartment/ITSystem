@@ -21,7 +21,6 @@
             </div>
         </div>
 
-
         <!-- SECCIÓN DE CARDS DE TICKETS -->
         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4" id="ticketsContainer">
             @if (Model != null && Model.Any())
@@ -35,17 +34,17 @@
                     <div class="col ticket-item">
                         <div class="card h-100 card-area shadow-sm border-1 rounded-3 card-ticket">
                             <!-- Cabecera de la Tarjeta -->
-                            <div class="card-header bg-primary d-flex justify-content-between align-items-center border-0 py-3">
+                            <div class=" card-header bg-primary d-flex justify-content-between align-items-center border-0 py-3">
                                 <span class="fw-bold text-light small"><i class="fas fa-hashtag"></i> @ticket.Folio</span>
-                                <span class="badge @bgEstado rounded-pill px-3">@ticket.Estado</span>
+                                <span class="estado-ticket badge @bgEstado rounded-pill px-3">@ticket.Estado</span>
                             </div>
 
                             <!-- Cuerpo de la Tarjeta -->
                             <div class="card-body">
                                 <!-- Categoría y Subcategoría -->
-                                <h6 class="card-subtitle mb-2 text-primary fw-bold">
+                                <h6 class="categoria-ticket card-subtitle mb-2 text-primary fw-bold">
                                     <i class="fas fa-folder me-1"></i> @(ticket.Categoria?.Nombre ?? "Sin Categoría")
-                                    <small class="text-muted fw-normal"> / @(ticket.Subcategoria?.Nombre ?? "General")</small>
+                                    <small class="text-dark fw-normal"> / @(ticket.Subcategoria?.Nombre ?? "General")</small>
                                 </h6>
 
                                 <!-- Descripción del Ticket -->
@@ -53,10 +52,10 @@
                                     @ticket.Descripcion
                                 </p>
 
-                                <hr class="text-muted opacity-25 my-2">
+                                <hr class="text-dark opacity-25 my-2">
 
                                 <!-- Información Detallada (Fila inferior) -->
-                                <div class="row align-items-center g-2 small text-muted">
+                                <div class="row align-items-center g-2 small text-dark">
                                     <!-- LADO IZQUIERDO: Foto y Nombre del Solicitante -->
                                     <div class="col-7 d-flex align-items-center gap-2">
                                         @if (ticket.UsuarioSolicitante != null && ticket.UsuarioSolicitante.NumeroEmpleado.HasValue)
@@ -85,28 +84,38 @@
                                                 @(ticket.UsuarioSolicitante?.Nombre?.Substring(0, 1) ?? "U")
                                             </div>
                                         }
-                                        <!-- Nombre del Solicitante -->
-                                        <span class="solicitante-ticket text-truncate fw-semibold" title="@(ticket.UsuarioSolicitante?.Nombre ?? "Anónimo")">
-                                            @(ticket.UsuarioSolicitante?.Nombre ?? "Anónimo")
-                                        </span>
+                                        <!-- Nombre del Solicitante y Número de Empleado juntos -->
+                                        <div class="d-flex flex-column text-truncate">
+                                            <span class="solicitante-ticket text-dark fw-semibold" title="@(ticket.UsuarioSolicitante?.Nombre ?? "Anónimo")">
+                                                @(ticket.UsuarioSolicitante?.Nombre ?? "Anónimo")
+                                            </span>
+                                            @if (ticket.UsuarioSolicitante?.NumeroEmpleado != null)
+                                            {
+                                                <small class="NumeroEmpleado-ticket text-dark id-empleado-ticket" style="font-size: 0.7rem; margin-top: -2px;">
+                                                    # Empleado: @ticket.UsuarioSolicitante.NumeroEmpleado
+                                                </small>
+                                            }
+                                        </div>
                                     </div>
 
                                     <!-- LADO DERECHO: Área -->
-                                    <div class="col-5 text-end text-truncate fw-semibold">
+                                    <div class="area-ticket col-5 text-end text-dark fw-semibold">
                                         <i class="fas fa-layer-group me-1"></i> @(ticket.Area?.Nombre ?? "N/A")
                                     </div>
 
+                                    <hr class="text-dark opacity-25 my-2">
+
                                     <!-- FECHA -->
-                                    <div class="col-12 mt-1 pt-1 border-top border-light text-muted" style="font-size: 0.75rem;">
+                                    <div class="col-12 mt-1 pt-1 mt-1 text-dark" style="font-size: 0.75rem;">
                                         <i class="far fa-calendar-alt me-1"></i>
-                                        @(ticket.FechaCreacion.HasValue? ticket.FechaCreacion.Value.ToString("dd/MM/yyyy hh:mm tt") : "Sin fecha")
+                                        Fecha de solicitud: @(ticket.FechaCreacion.HasValue? ticket.FechaCreacion.Value.ToString("dd/MM/yyyy") : "Sin fecha")
                                     </div>
                                 </div>
                             </div>
 
 
                             <!-- Pie de la Tarjeta (Acciones) -->
-                            <div class="card-footer border-0 d-flex justify-content-end pb-3">
+                            <div class="card-footer bg-transparent border-0 d-flex justify-content-end pb-3">
                                 <!-- Reemplaza el botón anterior en tu card por este -->
                                 <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 btn-ver-detalles" data-id="@ticket.Id">
                                     <i class="fas fa-eye me-1"></i> Ver Detalles
@@ -341,26 +350,6 @@
         });
     </script>
 
-    <script>
-        document.getElementById('searchInput').addEventListener('input', function () {
-            const filter = this.value.toLowerCase();
-            const items = document.querySelectorAll('.ticket-item');
-
-            items.forEach(item => {
-                // Campos por los que queremos buscar
-                const folio = item.querySelector('.card-header span').textContent.toLowerCase();
-                const descripcion = item.querySelector('.descripcion-ticket').textContent.toLowerCase();
-                const solicitante = item.querySelector('.solicitante-ticket').textContent.toLowerCase();
-
-                if (folio.includes(filter) || descripcion.includes(filter) || solicitante.includes(filter)) {
-                    item.style.display = ""; // Mostrar
-                } else {
-                    item.style.display = "none"; // Ocultar
-                }
-            });
-        });
-
-    </script>
 
     <script>
         // 1. INSTANCIAR EL MODAL DE DETALLES DE BOOTSTRAP
@@ -372,15 +361,14 @@
             const items = document.querySelectorAll('.ticket-item');
 
             items.forEach(item => {
+                // Campos por los que queremos buscar
                 const folio = item.querySelector('.card-header span').textContent.toLowerCase();
-                const descripcion = item.querySelector('.descripcion-ticket').textContent.toLowerCase();
-                const solicitante = item.querySelector('.solicitante-ticket').textContent.toLowerCase();
+                const elementos = item.querySelector('.card-ticket').textContent.toLowerCase();
 
-                // Si coincide con cualquiera de los tres campos, se mantiene visible
-                if (folio.includes(filter) || descripcion.includes(filter) || solicitante.includes(filter)) {
-                    item.style.display = "";
+                if (folio.includes(filter) || elementos.includes(filter)) {
+                    item.style.display = ""; // Mostrar
                 } else {
-                    item.style.display = "none";
+                    item.style.display = "none"; // Ocultar
                 }
             });
         });
