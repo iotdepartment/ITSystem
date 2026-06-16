@@ -220,7 +220,7 @@
                         <span id="lblCategoriaSub" class="text-dark fw-semibold d-block mt-1"></span>
                     </div>
 
-                    <!-- Solicitante (CON FOTO INTEGRADA) -->
+                    <!-- Solicitante -->
                     <div class="col-md-6">
                         <label class="text-muted small fw-bold d-block">Solicitante</label>
                         <div class="d-flex align-items-center gap-2 mt-1">
@@ -329,30 +329,43 @@
     </div>
 </div>
 
-<div class="modal card-glass fade" id="ModalResueltoTicket" tabindex="-1">
+<!-- 4. MODAL RESUELTO (ACTUALIZADO CON COMENTARIO) -->
+<div class="modal card-glass fade" id="ModalResueltoTicket" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+        <div class="modal-content shadow rounded-3">
 
             <div class="modal-header bg-success text-white">
-                <h5 class="modal-title">TIcket Resuelto</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title fw-bold">Ticket Resuelto</h5>
+                <button type="button" class="btn-close btn-close-white btn-cancelar-accion" data-bs-dismiss="modal"></button>
             </div>
 
             <div class="modal-body">
                 <p>¿Deseas cambiar el estatus de este ticket a <strong>Resuelto</strong>?</p>
+
+                <!-- Caja de texto para la solución -->
+                <textarea id="ResueltoComentario"
+                          class="form-control"
+                          rows="3"
+                          maxlength="100"
+                          placeholder="Escribe la solución o notas de cierre (máx. 100 caracteres)"></textarea>
+
+                <div class="text-end mt-1">
+                    <small id="ResueltoCount" class="text-muted">0 / 100</small>
+                </div>
             </div>
 
-            <div class="modal-footer">
-                <button type="button" class="btn btn-success rounded-pill" id="btnConfirmarResuelto">Confirmar</button>
-                <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-success rounded-pill px-4" id="btnConfirmarResuelto">Confirmar</button>
+                <button type="button" class="btn btn-secondary rounded-pill px-4 btn-cancelar-accion" data-bs-dismiss="modal">Cancelar</button>
             </div>
         </div>
     </div>
 </div>
 
+
 @section Scripts{
     <script>
-                // ==========================================
+        // ==========================================
         // LÓGICA DE FILTRADO DINÁMICO POR PESTAÑAS
         // ==========================================
         const tabs = document.querySelectorAll('.btn-tab-filtro');
@@ -410,11 +423,12 @@
         let modalDetalles = null;
         let modalTomar = null;
         let modalEspera = null;
-        let modalResuelto = null; // <-- AÑADE ESTA VARIABLE
+        let modalResuelto = null;
         let ticketIdSeleccionado = null;
-
         let txMotivo = null;
         let lblCount = null;
+        let txResuelto = null;
+        let lblResueltoCount = null;
 
         // ==========================================
         // 2. INICIALIZACIÓN SEGURA AL CARGAR EL DOM
@@ -433,6 +447,8 @@
 
             txMotivo = document.getElementById('EnEsperaComentario');
             lblCount = document.getElementById('EnEsperaCount');
+            txResuelto = document.getElementById('ResueltoComentario');
+            lblResueltoCount = document.getElementById('ResueltoCount');
 
 
             // CONTADOR DE CARACTERES EN TIEMPO REAL
@@ -441,6 +457,12 @@
                     if (lblCount) {
                         lblCount.textContent = `${this.value.length} / 100`;
                     }
+                });
+            }
+
+            if (txResuelto) {
+                txResuelto.addEventListener('input', function() {
+                    if (lblResueltoCount) lblResueltoCount.textContent = `${this.value.length} / 100`;
                 });
             }
 
@@ -586,10 +608,14 @@
                     if (modalEspera) modalEspera.show();
                 }
                 else if (accion === 'Resolver') {
-                    // CAMBIO: Ahora oculta detalles y despliega tu nuevo modal de confirmación
                     if (modalDetalles) modalDetalles.hide();
+                    if (txResuelto) {
+                        txResuelto.value = ''; // Limpia el texto anterior
+                        if (lblResueltoCount) lblResueltoCount.textContent = '0 / 100';
+                    }
                     if (modalResuelto) modalResuelto.show();
                 }
+
                 else if (accion === 'Reanudar') {
                     ejecutarCambioEstado(idTicket, 'En Proceso');
                 }
@@ -624,16 +650,26 @@
             });
         }
 
-               // NUEVA ACCIÓN: CONFIRMAR "TICKET RESUELTO"
+                // CONFIRMAR ACCIÓN: RESUELTO (CON VALIDACIÓN DE COMENTARIO)
         const btnConfResuelto = document.getElementById('btnConfirmarResuelto');
         if (btnConfResuelto) {
             btnConfResuelto.addEventListener('click', function () {
+                const solucionText = txResuelto ? txResuelto.value.trim() : '';
+
+                if (!solucionText) {
+                    alert('Por favor, ingresa las notas de cierre o solución antes de resolver el ticket.');
+                    if (txResuelto) txResuelto.focus();
+                    return;
+                }
+
                 if (ticketIdSeleccionado) {
                     if (modalResuelto) modalResuelto.hide();
-                    ejecutarCambioEstado(ticketIdSeleccionado, 'Resuelto');
+                    // Enviamos el ID, el Estado "Resuelto" y el Comentario personalizado
+                    ejecutarCambioEstado(ticketIdSeleccionado, 'Resuelto', solucionText);
                 }
             });
         }
+
 
         // ==========================================
         // 6. FUNCIÓN POST ASÍNCRONA HACIA C#

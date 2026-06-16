@@ -105,14 +105,25 @@ namespace ITSystem.Controllers
                 ticket.Comentarios = string.IsNullOrEmpty(ticket.Comentarios) ? nuevoComentario : $"{ticket.Comentarios}\n{nuevoComentario}";
             }
 
-            // 4. REGISTRO AUTOMÁTICO DE CIERRE
+            // 4. REGISTRO DE CIERRES, FECHAS Y COMENTARIO DE SOLUCIÓN PERSONALIZADO
             if (request.Estado == "Resuelto")
             {
                 ticket.FechaCierre = DateTime.Now;
                 string fechaHoy = DateTime.Now.ToString("dd/MM/yyyy");
-                string notaResolucion = $"[Ticket Resuelto - {fechaHoy}]: Resuelto";
-                ticket.Comentarios = string.IsNullOrEmpty(ticket.Comentarios) ? notaResolucion : $"{ticket.Comentarios}\n{notaResolucion}";
+
+                // Si el técnico escribió un comentario, lo guardamos con el formato oficial de cierre
+                string notaResolucion = $"[Ticket Resuelto - {fechaHoy}]: {request.Comentario?.Trim()}";
+
+                if (string.IsNullOrEmpty(ticket.Comentarios))
+                {
+                    ticket.Comentarios = notaResolucion;
+                }
+                else
+                {
+                    ticket.Comentarios += $"\n{notaResolucion}";
+                }
             }
+
 
             _context.SaveChanges();
             return Ok();
