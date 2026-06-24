@@ -129,6 +129,44 @@ namespace ITSystem.Controllers
             return Ok();
         }
 
+        [HttpPost]
+        public IActionResult AgregarNotaSeguimiento([FromBody] AgregarNotaRequest request)
+        {
+            if (request == null || request.Id <= 0 || string.IsNullOrEmpty(request.Comentario))
+            {
+                return BadRequest("Datos de solicitud inválidos o comentario vacío.");
+            }
+
+            var ticket = _context.Tickets.FirstOrDefault(t => t.Id == request.Id);
+            if (ticket == null) return NotFound("El ticket especificado no existe.");
+
+            // 1. Registrar únicamente la fecha de actualización y la nota
+            ticket.FechaActualizacion = DateTime.Now;
+
+            string fechaHoy = DateTime.Now.ToString("dd/MM/yyyy");
+            string notaInterna = $"[Nota de Seguimiento - {fechaHoy}]: {request.Comentario.Trim()}";
+
+            if (string.IsNullOrEmpty(ticket.Comentarios))
+            {
+                ticket.Comentarios = notaInterna;
+            }
+            else
+            {
+                ticket.Comentarios += $"\n{notaInterna}";
+            }
+
+            _context.SaveChanges();
+            return Ok(new { success = true, message = "Nota agregada correctamente." });
+        }
+
+        // Modelo de datos para este endpoint (puedes colocarlo al final de tu archivo)
+        public class AgregarNotaRequest
+        {
+            public int Id { get; set; }
+            public string Comentario { get; set; }
+        }
+
+
     }
 
     // CLASE AUXILIAR ACTUALIZADA: Recibe el parámetro opcional desde el cliente
@@ -138,4 +176,6 @@ namespace ITSystem.Controllers
         public string Estado { get; set; } = string.Empty;
         public string? Comentario { get; set; } // Propiedad añadida para el motivo
     }
+
+
 }

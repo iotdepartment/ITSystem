@@ -2,10 +2,10 @@
     
 
 <div class="container-fluid mt-1">
-   <div class="card title-glass rounded rounded-3 p-3">
-               <div class="card mb-5 p-3 shadow-lg border-1 rounded-pill title-glass">
-            <h2 class="m-0 text-start fw-bold">Gestión de Areas</h2>
-        </div>
+   <div class="card mb-4 p-3 border style-glass">
+        <h2 class="m-0 text-start fw-bold">Gestión de Areas</h2>
+   </div>
+   <div class="card mb-4 p-3 border style-glass">
         <div class="row mb-4 align-items-center">
             <div class="col-auto">
                 <button class="btn btn-success rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#CreateAreaModal">
@@ -21,7 +21,7 @@
             @foreach (var area in Model)
             {
                 <div class="col-md-3 mb-3">
-                    <div class="card card-area shadow-lg border-3" style="height: 150px;">
+                    <div class="card card-area border" style="height: 150px;">
 
                         <!-- Botón de engrane -->
                         <button class="settings-btn">

@@ -3,11 +3,11 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <div class="container-fluid">
-    <!-- Barra de herramientas (Titulo y Buscador) -->
-    <div class="card title-glass rounded rounded-3 p-3 mb-4">
-        <div class="card mb-4 p-3 shadow-lg border-1 rounded-pill title-glass">
-            <h2 class="m-0 text-start fw-bold">Gestión de Tickets</h2>
-        </div>
+    <div class="card mb-4 p-3 border style-glass">
+        <h2 class="m-0 text-start fw-bold">Gestión de Tickets</h2>
+    </div>
+    <div class="card mb-4 p-3 border style-glass">
+        
         <div class="row align-items-center mb-4">
             <div class="col">
                 <input type="text" id="searchInput" class="form-control border-1 rounded-pill" placeholder="Buscar ticket por folio, descripción o solicitante...">
@@ -256,7 +256,6 @@
                         <label class="text-muted small fw-bold d-block mb-1">Notas / Comentarios Iniciales</label>
                         <div class="p-3 bg-light rounded border text-muted small" id="lblComentarios" style="white-space: pre-wrap; min-height: 45px;"></div>
                     </div>
-
                 </div>
             </div>
 
@@ -266,13 +265,13 @@
                 <div id="contenedorAcciones">
                     <!-- Los botones se generarán dinámicamente con JavaScript -->
                 </div>
-
                 <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
 </div>
 
+<!-- MODAL PARA PONER EN PROCESO -->
 <div class="modal card-glass fade" id="ModalTomarTicket" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -295,6 +294,7 @@
     </div>
 </div>
 
+<!-- MODAL PARA PONER EN ESPERA -->
 <div class="modal card-glass fade" id="ModalEnEspera" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -329,7 +329,7 @@
     </div>
 </div>
 
-<!-- 4. MODAL RESUELTO (ACTUALIZADO CON COMENTARIO) -->
+<!-- MODAL PARA CONFIRMAR RESUELTO -->
 <div class="modal card-glass fade" id="ModalResueltoTicket" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content shadow rounded-3">
@@ -357,6 +357,33 @@
             <div class="modal-footer bg-light">
                 <button type="button" class="btn btn-success rounded-pill px-4" id="btnConfirmarResuelto">Confirmar</button>
                 <button type="button" class="btn btn-secondary rounded-pill px-4 btn-cancelar-accion" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL PARA AGREGAR COMENTARIO -->
+<div class="modal card-glass fade" id="ModalAgregarComentario" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow rounded-3">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title fw-bold">Agregar Nota de Seguimiento</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">Esta nota se añadirá directamente al historial/bitácora del ticket sin alterar su estado actual.</p>
+                <textarea id="NotaSeguimientoTexto"
+                          class="form-control"
+                          rows="3"
+                          maxlength="150"
+                          placeholder="Escribe aquí el avance, llamada realizada o nota interna..."></textarea>
+                <div class="text-end mt-1">
+                    <small id="NotaSeguimientoCount" class="text-muted">0 / 150</small>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-primary rounded-pill px-4" id="btnConfirmarNota">Guardar Nota</button>
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
             </div>
         </div>
     </div>
@@ -429,6 +456,9 @@
         let lblCount = null;
         let txResuelto = null;
         let lblResueltoCount = null;
+        let modalComentario = null;
+        let txNota = null;
+        let lblNotaCount = null;
 
         // ==========================================
         // 2. INICIALIZACIÓN SEGURA AL CARGAR EL DOM
@@ -449,6 +479,9 @@
             lblCount = document.getElementById('EnEsperaCount');
             txResuelto = document.getElementById('ResueltoComentario');
             lblResueltoCount = document.getElementById('ResueltoCount');
+            modalComentario = new bootstrap.Modal(document.getElementById('ModalAgregarComentario'));
+            txNota = document.getElementById('NotaSeguimientoTexto');
+            lblNotaCount = document.getElementById('NotaSeguimientoCount');
 
 
             // CONTADOR DE CARACTERES EN TIEMPO REAL
@@ -463,6 +496,12 @@
             if (txResuelto) {
                 txResuelto.addEventListener('input', function() {
                     if (lblResueltoCount) lblResueltoCount.textContent = `${this.value.length} / 100`;
+                });
+            }
+
+            if (txNota) {
+                txNota.addEventListener('input', function() {
+                    if (lblNotaCount) lblNotaCount.textContent = `${this.value.length} / 150`;
                 });
             }
 
@@ -536,13 +575,13 @@
                         avatarModal.style.setProperty('display', 'flex', 'important');
                     }
 
-                    // 4. CONTROL DINÁMICO DE BOTONES DE ACCIÓN
+                    // CONTROL DINÁMICO DE BOTONES DE ACCIÓN (ACTUALIZADO)
                     const contenedorAcciones = document.getElementById('contenedorAcciones');
                     if (contenedorAcciones) {
-                        contenedorAcciones.innerHTML = ''; 
+                        contenedorAcciones.innerHTML = '';
                         const currentId = ticket.id || ticketId;
 
-                        if (ticket.estado === "Abierto" || ticket.estado === "Nuevo") {
+                        if (ticket.estado === "Nuevo" || ticket.estado === "Por Atender") { // Validamos tus dos nomenclaturas por seguridad
                             contenedorAcciones.innerHTML = `
                                 <button type="button" class="btn btn-success rounded-pill px-4 btn-accion-ticket" data-accion="Tomar" data-id="${currentId}">
                                     <i class="fas fa-hand-holding-hand me-1"></i> Tomar Ticket
@@ -551,7 +590,10 @@
                         }
                         else if (ticket.estado === "En Proceso") {
                             contenedorAcciones.innerHTML = `
-                                <button type="button" class="btn btn-warning text-dark rounded-pill px-4 me-2 btn-accion-ticket" data-accion="Esperar" data-id="${currentId}">
+                                <button type="button" class="btn btn-outline-secondary rounded-pill px-3 me-2 btn-accion-ticket" data-accion="Comentar" data-id="${currentId}">
+                                    <i class="fas fa-comment-alt me-1"></i> Agregar Nota
+                                </button>
+                                <button type="button" class="btn btn-warning text-dark rounded-pill px-3 me-2 btn-accion-ticket" data-accion="Esperar" data-id="${currentId}">
                                     <i class="fas fa-pause me-1"></i> Poner en Espera
                                 </button>
                                 <button type="button" class="btn btn-primary rounded-pill px-4 btn-accion-ticket" data-accion="Resolver" data-id="${currentId}">
@@ -559,9 +601,12 @@
                                 </button>
                             `;
                         }
-                        else if (ticket.estado === "En Espera" || ticket.estado === "Pendiente") {
+                        else if (ticket.estado === "En Espera") {
                             contenedorAcciones.innerHTML = `
-                                <button type="button" class="btn btn-success rounded-pill px-4 me-2 btn-accion-ticket" data-accion="Reanudar" data-id="${currentId}">
+                                <button type="button" class="btn btn-outline-secondary rounded-pill px-3 me-2 btn-accion-ticket" data-accion="Comentar" data-id="${currentId}">
+                                    <i class="fas fa-comment-alt me-1"></i> Agregar Nota
+                                </button>
+                                <button type="button" class="btn btn-success rounded-pill px-3 me-2 btn-accion-ticket" data-accion="Reanudar" data-id="${currentId}">
                                     <i class="fas fa-play me-1"></i> Reanudar
                                 </button>
                                 <button type="button" class="btn btn-primary rounded-pill px-4 btn-accion-ticket" data-accion="Resolver" data-id="${currentId}">
@@ -570,6 +615,7 @@
                             `;
                         }
                     }
+
 
                     // Mostrar el modal de detalles principal
                     if (modalDetalles) modalDetalles.show();
@@ -615,6 +661,16 @@
                     }
                     if (modalResuelto) modalResuelto.show();
                 }
+
+                else if (accion === 'Comentar') {
+                    if (modalDetalles) modalDetalles.hide(); // Oculta el modal de detalles base
+                    if (txNota) {
+                        txNota.value = ''; // Limpia textos previos
+                        if (lblNotaCount) lblNotaCount.textContent = '0 / 150';
+                    }
+                    if (modalComentario) modalComentario.show();
+                }
+
 
                 else if (accion === 'Reanudar') {
                     ejecutarCambioEstado(idTicket, 'En Proceso');
@@ -670,6 +726,26 @@
             });
         }
 
+        const btnConfirmarNota = document.getElementById('btnConfirmarNota');
+        if (btnConfirmarNota) {
+            btnConfirmarNota.addEventListener('click', function () {
+                const notaText = txNota ? txNota.value.trim() : '';
+
+                if (!notaText) {
+                    alert('Por favor, escribe un comentario antes de guardar.');
+                    if (txNota) txNota.focus();
+                    return;
+                }
+
+                if (ticketIdSeleccionado) {
+                    if (modalComentario) modalComentario.hide();
+
+                    // LLamamos al nuevo método independiente
+                    guardarNotaSeguimiento(ticketIdSeleccionado, notaText);
+                }
+            });
+        }
+
 
         // ==========================================
         // 6. FUNCIÓN POST ASÍNCRONA HACIA C#
@@ -698,6 +774,35 @@
                 alert("Ocurrió un error en la conexión con el servidor.");
             });
         }
-        
+
+        function guardarNotaSeguimiento(id, comentario) {
+            fetch('/GestionarTickets/AgregarNotaSeguimiento', { // Asegúrate de validar la ruta de tu controlador
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    id: id,
+                    comentario: comentario
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Aquí pones tu lógica existente para refrescar la vista o tabla
+                    if (typeof cargarTickets === 'function') {
+                        cargarTickets(); // Recarga la tabla general si usas AJAX
+                    } else {
+                        location.reload(); // Recarga de página clásica si no usas AJAX
+                    }
+                } else {
+                    alert('Ocurrió un error al intentar guardar la nota de seguimiento.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error de conexión con el servidor.');
+            });
+        }
+
     </script>
 }
