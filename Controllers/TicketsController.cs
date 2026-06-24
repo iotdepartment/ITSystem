@@ -141,7 +141,7 @@ namespace ITSystem.Controllers
                 asignado = ticket.UsuarioAsignado?.Nombre ?? "Sin asignar",
                 descripcion = ticket.Descripcion,
                 comentarios = ticket.Comentarios ?? "Sin comentarios adicionales",
-                fecha = ticket.FechaCreacion?.ToString("dd/MM/yyyy hh:mm tt") ?? "N/A"
+                fecha = ticket.FechaCreacion?.ToString("dd/MM/yyyy") ?? "N/A"
             });
         }
 
