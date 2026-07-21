@@ -1,0 +1,316 @@
+﻿<!-- SECCIÓN DE GRÁFICAS DEL DASHBOARD -->
+<div class="container-fluid">
+    <div class="card mb-4 p-3 border style-glass">
+        <h2 class="m-0 text-start fw-bold">Graficas de Rendimiento</h2>
+    </div>
+    <div class="row mb-4">
+        <div class="col-8">
+            <div class="card card-glass shadow border-0 rounded-3 h-100">
+                <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
+                    <h5 class="card-title mb-0 fw-bold text-dark">
+                        <i class="fas fa-chart-bar me-2 text-primary"></i>Rendimiento Anual: Creados vs Cerrados
+                    </h5>
+                    <span class="badge bg-light text-dark fw-semibold px-3 py-2 rounded-pill border">
+                        Año <span id="lblAnioActual"></span>
+                    </span>
+                </div>
+                <div class="card-body bg-light p-4">
+                    <div style="position: relative; height: 320px; width: 100%;">
+                        <!-- El lienzo donde Chart.js pintará la gráfica -->
+                        <canvas id="chartTicketsAnual"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Gráfica de Cumplimiento (Derecha) -->
+        <div class="col-4">
+            <div class="card card-glass bg-light shadow border-0 rounded-3 h-100">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title mb-0 fw-bold text-dark">
+                        <i class="fas fa-chart-pie me-2 text-success"></i>Porcentaje de Cumplimiento
+                    </h5>
+                </div>
+                <div class="card-body p-4 d-flex flex-column align-items-center justify-content-center position-relative">
+                    <div style="position: relative; height: 260px; width: 100%;">
+                        <canvas id="chartCumplimiento"></canvas>
+                    </div>
+                    <!-- Texto central con el porcentaje grande -->
+                    <div class="text-center mt-3">
+                        <h3 class="fw-bold text-dark mb-0" id="txtPorcentajeGranTotal">0%</h3>
+                        <small class="text-muted">Tickets Resueltos con éxito</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card card-glass bg-light shadow border-0 rounded-3">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title mb-0 fw-bold text-dark">
+                        <i class="fas fa-user-tie me-2 text-info"></i>Carga de Trabajo: Tickets Activos por Técnico
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Si hay muchos técnicos, puedes subir el height a 400px -->
+                    <div style="position: relative; height: 350px; width: 100%;">
+                        <canvas id="chartTicketsPorTecnico"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Asegúrate de incluir la librería Chart.js si no la tienes en tu Layout -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Coloca el año actual en la etiqueta del HTML
+        const lblAnio = document.getElementById('lblAnioActual');
+        if (lblAnio) lblAnio.textContent = new Date().getFullYear();
+
+        // Inicializar la carga de la gráfica
+        cargarGraficaTickets();
+    });
+
+    function cargarGraficaTickets() {
+        fetch('/Dashboard/ObtenerMetricasAnuales')
+            .then(response => response.json())
+            .then(data => {
+                const ctx = document.getElementById('chartTicketsAnual').getContext('2d');
+
+                // Nombres de los meses de manera simplificada
+                const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+                // Creamos la instancia de Chart.js
+                new Chart(ctx, {
+                    type: 'bar', // Tipo barra para comparar uno al lado del otro
+                    data: {
+                        labels: meses,
+                        datasets: [
+                            {
+                                label: 'Tickets Generados',
+                                data: data.creados,
+                                backgroundColor: 'rgba(13, 110, 253, 0.75)', // Azul Bootstrap corporativo
+                                borderColor: 'rgb(13, 110, 253)',
+                                borderWidth: 1,
+                                borderRadius: 6, // Esquinas redondeadas estéticas
+                                barPercentage: 0.8,
+                                categoryPercentage: 0.7
+                            },
+                            {
+                                label: 'Tickets Cerrados',
+                                data: data.cerrados,
+                                backgroundColor: 'rgba(25, 135, 84, 0.75)', // Verde Bootstrap (Éxito / Resuelto)
+                                borderColor: 'rgb(25, 135, 84)',
+                                borderWidth: 1,
+                                borderRadius: 6,
+                                barPercentage: 0.8,
+                                categoryPercentage: 0.7
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    usePointStyle: true,
+                                    boxWidth: 10,
+                                    font: { weight: 'bold', family: 'system-ui' }
+                                }
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                padding: 12
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false } // Oculta líneas verticales de fondo
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1, // Fuerza a que cuente de 1 en 1 (evita decimales en tickets)
+                                    precision: 0
+                                }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Error al cargar la gráfica del dashboard:', error));
+    }
+
+</script>
+
+<script>
+        document.addEventListener("DOMContentLoaded", function () {
+        const lblAnio = document.getElementById('lblAnioActual');
+        if (lblAnio) lblAnio.textContent = new Date().getFullYear();
+
+        // Inicializar ambas gráficas
+        cargarGraficaTickets();
+        cargarGraficaCumplimiento();
+    });
+
+    function cargarGraficaCumplimiento() {
+        fetch('/Dashboard/ObtenerPorcentajeCumplimiento')
+            .then(response => {
+                if (!response.ok) throw new Error("Error al obtener métricas de cumplimiento");
+                return response.json();
+            })
+            .then(data => {
+                // Actualizar el texto numérico grande debajo de la dona
+                const txtPorcentaje = document.getElementById('txtPorcentajeGranTotal');
+                if (txtPorcentaje) txtPorcentaje.textContent = `${data.porcentajeCumplimiento}%`;
+
+                const ctx = document.getElementById('chartCumplimiento').getContext('2d');
+                if (!ctx) return;
+
+                new Chart(ctx, {
+                    type: 'doughnut', // Gráfica tipo Dona
+                    data: {
+                        labels: ['Resueltos', 'Pendientes / Otros'],
+                        datasets: [{
+                            data: [data.resueltos, data.pendientes],
+                            backgroundColor: [
+                                'rgba(25, 135, 84, 0.85)',  // Verde Bootstrap para lo logrado
+                                'rgba(220, 53, 69, 0.15)'   // Rojo tenue para lo que falta por cerrar
+                            ],
+                            borderColor: [
+                                'rgb(25, 135, 84)',
+                                'rgba(220, 53, 69, 0.4)'
+                            ],
+                            borderWidth: 1,
+                            cutout: '75%' // Hace la dona más delgada y elegante
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    usePointStyle: true,
+                                    boxWidth: 8,
+                                    font: { family: 'system-ui', size: 12 }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const valor = context.raw;
+                                        const total = data.total;
+                                        const pct = total > 0 ? ((valor / total) * 100).toFixed(1) : 0;
+                                        return ` ${context.label}: ${valor} tickets (${pct}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Error al cargar gráfica de cumplimiento:', error));
+    }
+
+</script>
+
+<script>
+        document.addEventListener("DOMContentLoaded", function () {
+        const lblAnio = document.getElementById('lblAnioActual');
+        if (lblAnio) lblAnio.textContent = new Date().getFullYear();
+
+        // Inicializar las 3 gráficas del dashboard
+        cargarGraficaTickets();
+        cargarGraficaCumplimiento();
+        cargarGraficaPorTecnico(); // <- Nueva llamada
+    });
+
+        function cargarGraficaPorTecnico() {
+        fetch('/Dashboard/ObtenerTicketsPorTecnico')
+            .then(response => {
+                if (!response.ok) throw new Error("Error al obtener carga detallada por técnico");
+                return response.json();
+            })
+            .then(data => {
+                const ctx = document.getElementById('chartTicketsPorTecnico').getContext('2d');
+                if (!ctx) return;
+
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.tecnicos, // Nombres de los técnicos
+                        datasets: [
+                            {
+                                label: 'Tickets Asignados (Activos)',
+                                data: data.activos, // Datos de carga actual
+                                backgroundColor: 'rgba(0, 191, 165, 0.75)', // Turquesa / Cian
+                                borderColor: 'rgb(0, 150, 136)',
+                                borderWidth: 1,
+                                borderRadius: 4,
+                                barPercentage: 0.8,
+                                categoryPercentage: 0.6
+                            },
+                            {
+                                label: 'Tickets Cerrados (Histórico)',
+                                data: data.cerrados, // Datos de efectividad
+                                backgroundColor: 'rgba(25, 135, 84, 0.75)', // Verde Éxito
+                                borderColor: 'rgb(25, 135, 84)',
+                                borderWidth: 1,
+                                borderRadius: 4,
+                                barPercentage: 0.8,
+                                categoryPercentage: 0.6
+                            }
+                        ]
+                    },
+                    options: {
+                        indexAxis: 'y', // Mantiene la gráfica en formato horizontal
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top', // Muestra las etiquetas arriba para saber qué color es cuál
+                                labels: {
+                                    usePointStyle: true,
+                                    boxWidth: 10,
+                                    font: { family: 'system-ui', weight: 'bold' }
+                                }
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1,
+                                    precision: 0
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Cantidad de Tickets',
+                                    font: { weight: 'bold' }
+                                }
+                            },
+                            y: {
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Error al cargar gráfica comparativa por técnico:', error));
+    }
+
+</script>

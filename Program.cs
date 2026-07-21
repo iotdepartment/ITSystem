@@ -50,10 +50,4 @@ app.MapControllerRoute(
 
 app.Run();
 
-app.UseAuthorization();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Tickets2}/{action=Index}/{id?}");
-
-app.Run();
