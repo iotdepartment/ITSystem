@@ -1,12 +1,14 @@
-﻿<!-- SECCIÓN DE GRÁFICAS DEL DASHBOARD -->
+﻿<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<!-- SECCIÓN DE GRÁFICAS DEL DASHBOARD -->
 <div class="container-fluid">
-    <div class="card mb-4 p-3 border style-glass">
+    <div class="card mb-4 p-3 border Charts-style-glass">
         <h2 class="m-0 text-start fw-bold">Graficas de Rendimiento</h2>
     </div>
     <div class="row mb-4">
-        <div class="col-8">
-            <div class="card card-glass shadow border-0 rounded-3 h-100">
-                <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
+        <div class="col-9">
+            <div class="card Charts-style-glass h-100">
+                <div class="card-header py-3 d-flex align-items-center justify-content-between">
                     <h5 class="card-title mb-0 fw-bold text-dark">
                         <i class="fas fa-chart-bar me-2 text-primary"></i>Rendimiento Anual: Creados vs Cerrados
                     </h5>
@@ -14,7 +16,7 @@
                         Año <span id="lblAnioActual"></span>
                     </span>
                 </div>
-                <div class="card-body bg-light p-4">
+                <div class="card-body p-4">
                     <div style="position: relative; height: 320px; width: 100%;">
                         <!-- El lienzo donde Chart.js pintará la gráfica -->
                         <canvas id="chartTicketsAnual"></canvas>
@@ -23,9 +25,9 @@
             </div>
         </div>
         <!-- Gráfica de Cumplimiento (Derecha) -->
-        <div class="col-4">
-            <div class="card card-glass bg-light shadow border-0 rounded-3 h-100">
-                <div class="card-header bg-white py-3">
+        <div class="col-3">
+            <div class="card Charts-style-glass h-100">
+                <div class="card-header py-3">
                     <h5 class="card-title mb-0 fw-bold text-dark">
                         <i class="fas fa-chart-pie me-2 text-success"></i>Porcentaje de Cumplimiento
                     </h5>
@@ -43,16 +45,19 @@
             </div>
         </div>
     </div>
+
     <div class="row g-4 mb-4">
         <div class="col-12">
-            <div class="card card-glass bg-light shadow border-0 rounded-3">
-                <div class="card-header bg-white py-3">
+            <div class="card Charts-style-glass h-100">
+                <div class="card-header py-3 d-flex align-items-center justify-content-between">
                     <h5 class="card-title mb-0 fw-bold text-dark">
                         <i class="fas fa-user-tie me-2 text-info"></i>Carga de Trabajo: Tickets Activos por Técnico
                     </h5>
+                    <span class="badge bg-light text-muted fw-normal px-3 py-2 rounded-pill border">
+                        Métricas del año en curso
+                    </span>
                 </div>
                 <div class="card-body p-4">
-                    <!-- Si hay muchos técnicos, puedes subir el height a 400px -->
                     <div style="position: relative; height: 350px; width: 100%;">
                         <canvas id="chartTicketsPorTecnico"></canvas>
                     </div>
@@ -60,6 +65,86 @@
             </div>
         </div>
     </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-9">
+            <div class="card Charts-style-glass h-100">
+                <div class="card-header py-3 d-flex align-items-center justify-content-between">
+                    <h5 class="card-title mb-0 fw-bold text-dark">
+                        <i class="fas fa-hourglass-half me-2 text-warning"></i>Tiempos Promedio de Respuesta y Solución
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div style="position: relative; height: 320px; width: 100%;">
+                        <canvas id="chartTiemposRespuesta"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GRÁFICA DE EFECTIVIDAD DE RESOLUCIÓN -->
+        <div class="col-3">
+            <div class="card Charts-style-glass h-100">
+                <div class="card-header py-3">
+                    <h5 class="card-title mb-0 fw-bold text-dark">
+                        <i class="fas fa-bullseye me-2 text-primary"></i>Efectividad de Resolución
+                    </h5>
+                </div>
+                <div class="card-body p-4 d-flex flex-column align-items-center justify-content-center">
+                    <div style="position: relative; height: 260px; width: 100%;">
+                        <canvas id="chartEfectividadResolucion"></canvas>
+                    </div>
+                    <div class="text-center mt-3">
+                        <h3 class="fw-bold text-dark mb-0" id="txtFcrPorcentaje">0%</h3>
+                        <small class="text-muted">Resolución en Primer Contacto</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card Charts-style-glass">
+                <!-- Encabezado Limpio -->
+                <div class="card-header py-3 d-flex align-items-center justify-content-between">
+                    <h5 class="card-title mb-0 fw-bold text-dark">
+                        <i class="fas fa-tasks me-2 text-primary"></i>Distribución de Tickets por Estado Actual
+                    </h5>
+                    <span class="badge bg-light text-muted fw-normal px-3 py-2 rounded-pill border">
+                        Métricas del año en curso
+                    </span>
+                </div>
+
+                <div class="card-body p-4">
+                    <div style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="chartEstadosTickets"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <!-- GRÁFICA DE TICKETS RESUELTOS POR CATEGORÍA Y SUBCATEGORÍA -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card Charts-style-glass">
+                <div class="card-header py-3">
+                    <h5 class="card-title mb-0 fw-bold text-dark">
+                        <i class="fas fa-tags me-2 text-success"></i>Efectividad por Servicio: Resueltos por Categoría / Subcategoría
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Se asigna una altura cómoda de 350px para ver las barras con espacio -->
+                    <div style="position: relative; height: 350px; width: 100%;">
+                        <canvas id="chartCategoriasSub"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <!-- Asegúrate de incluir la librería Chart.js si no la tienes en tu Layout -->
@@ -68,11 +153,11 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // Coloca el año actual en la etiqueta del HTML
+
         const lblAnio = document.getElementById('lblAnioActual');
         if (lblAnio) lblAnio.textContent = new Date().getFullYear();
 
-        // Inicializar la carga de la gráfica
+  
         cargarGraficaTickets();
     });
 
@@ -80,31 +165,29 @@
         fetch('/Dashboard/ObtenerMetricasAnuales')
             .then(response => response.json())
             .then(data => {
-                const ctx = document.getElementById('chartTicketsAnual').getContext('2d');
+                const ctx = document.getElementById('chartTicketsAnual').getContext('2d')
 
-                // Nombres de los meses de manera simplificada
                 const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-                // Creamos la instancia de Chart.js
                 new Chart(ctx, {
-                    type: 'bar', // Tipo barra para comparar uno al lado del otro
+                    type: 'bar', 
                     data: {
                         labels: meses,
                         datasets: [
                             {
                                 label: 'Tickets Generados',
                                 data: data.creados,
-                                backgroundColor: 'rgba(13, 110, 253, 0.75)', // Azul Bootstrap corporativo
+                                backgroundColor: 'rgba(13, 110, 253, 0.75)', 
                                 borderColor: 'rgb(13, 110, 253)',
                                 borderWidth: 1,
-                                borderRadius: 6, // Esquinas redondeadas estéticas
+                                borderRadius: 6,
                                 barPercentage: 0.8,
                                 categoryPercentage: 0.7
                             },
                             {
                                 label: 'Tickets Cerrados',
                                 data: data.cerrados,
-                                backgroundColor: 'rgba(25, 135, 84, 0.75)', // Verde Bootstrap (Éxito / Resuelto)
+                                backgroundColor: 'rgba(25, 135, 84, 0.75)', 
                                 borderColor: 'rgb(25, 135, 84)',
                                 borderWidth: 1,
                                 borderRadius: 6,
@@ -113,6 +196,8 @@
                             }
                         ]
                     },
+
+                    plugins: [ChartDataLabels],
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
@@ -129,18 +214,38 @@
                                 mode: 'index',
                                 intersect: false,
                                 padding: 12
+                            },
+                     
+                            datalabels: {
+                                anchor: 'end',      
+                                align: 'top',       
+                                offset: 2,           
+                                font: {
+                                    weight: 'bold',
+                                    size: 11,
+                                    family: 'system-ui'
+                                },
+                        
+                                formatter: function(value) {
+                                    return value > 0 ? value : '';
+                                },
+                        
+                                color: function(context) {
+                                    return context.dataset.borderColor;
+                                }
                             }
                         },
                         scales: {
                             x: {
-                                grid: { display: false } // Oculta líneas verticales de fondo
+                                grid: { display: false } 
                             },
                             y: {
                                 beginAtZero: true,
                                 ticks: {
-                                    stepSize: 1, // Fuerza a que cuente de 1 en 1 (evita decimales en tickets)
+                                    stepSize: 1,
                                     precision: 0
-                                }
+                                },
+                                grace: '10%' 
                             }
                         }
                     }
@@ -148,16 +253,13 @@
             })
             .catch(error => console.error('Error al cargar la gráfica del dashboard:', error));
     }
-
 </script>
 
+
 <script>
-        document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", function () {
         const lblAnio = document.getElementById('lblAnioActual');
         if (lblAnio) lblAnio.textContent = new Date().getFullYear();
-
-        // Inicializar ambas gráficas
-        cargarGraficaTickets();
         cargarGraficaCumplimiento();
     });
 
@@ -168,7 +270,6 @@
                 return response.json();
             })
             .then(data => {
-                // Actualizar el texto numérico grande debajo de la dona
                 const txtPorcentaje = document.getElementById('txtPorcentajeGranTotal');
                 if (txtPorcentaje) txtPorcentaje.textContent = `${data.porcentajeCumplimiento}%`;
 
@@ -176,21 +277,21 @@
                 if (!ctx) return;
 
                 new Chart(ctx, {
-                    type: 'doughnut', // Gráfica tipo Dona
+                    type: 'doughnut',
                     data: {
                         labels: ['Resueltos', 'Pendientes / Otros'],
                         datasets: [{
                             data: [data.resueltos, data.pendientes],
                             backgroundColor: [
-                                'rgba(25, 135, 84, 0.85)',  // Verde Bootstrap para lo logrado
-                                'rgba(220, 53, 69, 0.15)'   // Rojo tenue para lo que falta por cerrar
+                                'rgba(25, 135, 84, 0.85)',  
+                                'rgba(220, 53, 69, 0.15)'  
                             ],
                             borderColor: [
                                 'rgb(25, 135, 84)',
                                 'rgba(220, 53, 69, 0.4)'
                             ],
                             borderWidth: 1,
-                            cutout: '75%' // Hace la dona más delgada y elegante
+                            cutout: '75%' 
                         }]
                     },
                     options: {
@@ -221,21 +322,19 @@
             })
             .catch(error => console.error('Error al cargar gráfica de cumplimiento:', error));
     }
-
 </script>
 
 <script>
-        document.addEventListener("DOMContentLoaded", function () {
+    let chartTecnicosInstancia = null;
+
+    document.addEventListener("DOMContentLoaded", function () {
         const lblAnio = document.getElementById('lblAnioActual');
         if (lblAnio) lblAnio.textContent = new Date().getFullYear();
 
-        // Inicializar las 3 gráficas del dashboard
-        cargarGraficaTickets();
-        cargarGraficaCumplimiento();
-        cargarGraficaPorTecnico(); // <- Nueva llamada
+        cargarGraficaPorTecnico();
     });
 
-        function cargarGraficaPorTecnico() {
+    function cargarGraficaPorTecnico() {
         fetch('/Dashboard/ObtenerTicketsPorTecnico')
             .then(response => {
                 if (!response.ok) throw new Error("Error al obtener carga detallada por técnico");
@@ -245,15 +344,21 @@
                 const ctx = document.getElementById('chartTicketsPorTecnico').getContext('2d');
                 if (!ctx) return;
 
-                new Chart(ctx, {
+       
+                if (chartTecnicosInstancia !== null) {
+                    chartTecnicosInstancia.destroy();
+                }
+
+              
+                chartTecnicosInstancia = new Chart(ctx, {
                     type: 'bar',
                     data: {
-                        labels: data.tecnicos, // Nombres de los técnicos
+                        labels: data.tecnicos,
                         datasets: [
                             {
                                 label: 'Tickets Asignados (Activos)',
-                                data: data.activos, // Datos de carga actual
-                                backgroundColor: 'rgba(0, 191, 165, 0.75)', // Turquesa / Cian
+                                data: data.activos,
+                                backgroundColor: 'rgba(0, 191, 165, 0.75)',
                                 borderColor: 'rgb(0, 150, 136)',
                                 borderWidth: 1,
                                 borderRadius: 4,
@@ -262,8 +367,8 @@
                             },
                             {
                                 label: 'Tickets Cerrados (Histórico)',
-                                data: data.cerrados, // Datos de efectividad
-                                backgroundColor: 'rgba(25, 135, 84, 0.75)', // Verde Éxito
+                                data: data.cerrados,
+                                backgroundColor: 'rgba(25, 135, 84, 0.75)',
                                 borderColor: 'rgb(25, 135, 84)',
                                 borderWidth: 1,
                                 borderRadius: 4,
@@ -272,13 +377,15 @@
                             }
                         ]
                     },
+                  
+                    plugins: [ChartDataLabels],
                     options: {
-                        indexAxis: 'y', // Mantiene la gráfica en formato horizontal
+                        indexAxis: 'y',
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
                             legend: {
-                                position: 'top', // Muestra las etiquetas arriba para saber qué color es cuál
+                                position: 'top',
                                 labels: {
                                     usePointStyle: true,
                                     boxWidth: 10,
@@ -288,6 +395,25 @@
                             tooltip: {
                                 mode: 'index',
                                 intersect: false
+                            },
+                      
+                            datalabels: {
+                                anchor: 'end',      
+                                align: 'right',      
+                                offset: 4,         
+                                font: {
+                                    weight: 'bold',
+                                    size: 11,
+                                    family: 'system-ui'
+                                },
+                           
+                                formatter: function(value) {
+                                    return value > 0 ? value : '';
+                                },
+                             
+                                color: function(context) {
+                                    return context.dataset.borderColor;
+                                }
                             }
                         },
                         scales: {
@@ -301,7 +427,9 @@
                                     display: true,
                                     text: 'Cantidad de Tickets',
                                     font: { weight: 'bold' }
-                                }
+                                },
+ 
+                                grace: '8%'
                             },
                             y: {
                                 grid: { display: false }
@@ -312,5 +440,371 @@
             })
             .catch(error => console.error('Error al cargar gráfica comparativa por técnico:', error));
     }
+</script>
+
+<script>
+    let chartTiemposInstancia = null;
+
+    document.addEventListener("DOMContentLoaded", function () {
+        cargarGraficaTiempos();
+    });
+
+    function cargarGraficaTiempos() {
+        fetch('/Dashboard/ObtenerTiemposPromedio')
+            .then(response => {
+                if (!response.ok) throw new Error("Error al obtener tiempos promedio");
+                return response.json();
+            })
+            .then(data => {
+                const ctx = document.getElementById('chartTiemposRespuesta').getContext('2d');
+                if (!ctx) return;
+
+               
+                if (chartTiemposInstancia !== null) {
+                    chartTiemposInstancia.destroy();
+                }
+
+                const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+             
+                chartTiemposInstancia = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: meses,
+                        datasets: [
+                            {
+                                label: 'Tiempo de Primera Atención (Horas)',
+                                data: data.atencion,
+                                borderColor: 'rgb(255, 193, 7)',
+                                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                                borderWidth: 3,
+                                tension: 0.3,
+                                fill: true,
+                                yAxisID: 'yHoras'
+                            },
+                            {
+                                label: 'Tiempo de Cierre/Solución (Días)',
+                                data: data.solucion,
+                                borderColor: 'rgb(13, 202, 240)',
+                                backgroundColor: 'rgba(13, 202, 240, 0.1)',
+                                borderWidth: 3,
+                                tension: 0.3,
+                                fill: true,
+                                yAxisID: 'yDias'
+                            }
+                        ]
+                    },
+                    
+                    plugins: [ChartDataLabels],
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top' },
+                            tooltip: { mode: 'index', intersect: false },
+                       
+                            datalabels: {
+                                anchor: 'end',       
+                                align: 'top',      
+                                offset: 4,           
+                                font: {
+                                    weight: 'bold',
+                                    size: 10,
+                                    family: 'system-ui'
+                                },
+                               
+                                formatter: function(value, context) {
+                                    if (value === 0) return '';
+
+                                 
+                                    return context.datasetIndex === 0 ? value + ' hrs' : value + ' d';
+                                },
+       
+                                color: function(context) {
+                                    return context.dataset.borderColor;
+                                }
+                            }
+                        },
+                        scales: {
+                            yHoras: {
+                                type: 'linear',
+                                position: 'left',
+                                title: { display: true, text: 'Horas (Atención)' },
+                                beginAtZero: true,
+                                grid: { drawOnChartArea: true },
+                                grace: '12%' 
+                            },
+                            yDias: {
+                                type: 'linear',
+                                position: 'right',
+                                title: { display: true, text: 'Días (Solución)' },
+                                beginAtZero: true,
+                                grid: { drawOnChartArea: false },
+                                grace: '12%'
+                            },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Error al cargar gráfica de tiempos:', error));
+    }
+</script>
+
+
+<script>
+    // Variable para controlar la instancia del gráfico en la memoria del navegador
+    let miGraficoEstados = null;
+
+    document.addEventListener("DOMContentLoaded", function () {
+        // Carga el volumen anual de inmediato
+        cargarGraficaEstadosAnual();
+    });
+
+    function cargarGraficaEstadosAnual() {
+        fetch('/Dashboard/ObtenerVolumenPorEstado')
+            .then(response => {
+                if (!response.ok) throw new Error("Error al obtener volumen anual de estados");
+                return response.json();
+            })
+            .then(data => {
+                renderizarGraficaEstadosCanvas(data.estados, data.totales);
+            })
+            .catch(error => console.error('Error al cargar gráfica de estados:', error));
+    }
+
+    function renderizarGraficaEstadosCanvas(labels, valores) {
+        const ctx = document.getElementById('chartEstadosTickets').getContext('2d');
+        if (!ctx) return;
+
+        // Limpieza de caché gráfica previa para evitar duplicación de texto
+        if (miGraficoEstados !== null) {
+            miGraficoEstados.destroy();
+        }
+
+        const coloresFondo = [
+            'rgba(220, 53, 69, 0.75)',  // Rojo - Por Atender
+            'rgba(255, 193, 7, 0.75)',  // Amarillo - En Proceso
+            'rgba(13, 202, 240, 0.75)', // Celeste - En Espera
+            'rgba(25, 135, 84, 0.75)'   // Verde - Resuelto
+        ];
+
+        const coloresBorde = [
+            'rgb(220, 53, 69)',
+            'rgb(255, 193, 7)',
+            'rgb(13, 202, 240)',
+            'rgb(25, 135, 84)'
+        ];
+
+        miGraficoEstados = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: valores,
+                    backgroundColor: coloresFondo,
+                    borderColor: coloresBorde,
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    barPercentage: 0.5
+                }]
+            },
+            plugins: [ChartDataLabels],
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        offset: 2,
+                        font: {
+                            weight: 'bold',
+                            size: 11,
+                            family: 'system-ui'
+                        },
+                        formatter: function(value) {
+                            return value > 0 ? value : '';
+                        },
+                        color: function(context) {
+                            return coloresBorde[context.dataIndex];
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, precision: 0 },
+                        grace: '10%' // Añade espacio arriba para que el número anual más alto no se corte
+                    }
+                }
+            }
+        });
+    }
+</script>
+
+
+<script>
+        document.addEventListener("DOMContentLoaded", function () {
+        // Inicializar junto a tus otras funciones
+        cargarGraficaEfectividad();
+    });
+
+    function cargarGraficaEfectividad() {
+        fetch('/Dashboard/ObtenerEfectividadResolucion')
+            .then(response => {
+                if (!response.ok) throw new Error("Error al obtener datos de efectividad");
+                return response.json();
+            })
+            .then(data => {
+                // Actualizar indicador central de FCR (Primera visita)
+                const txtFcr = document.getElementById('txtFcrPorcentaje');
+                if (txtFcr) txtFcr.textContent = `${data.fcr}%`;
+
+                const ctx = document.getElementById('chartEfectividadResolucion').getContext('2d');
+                if (!ctx) return;
+
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Primera Visita', 'Segunda Visita', 'Tiempo Extendido'],
+                        datasets: [{
+                            data: [data.primera, data.segunda, data.extendido],
+                            backgroundColor: [
+                                'rgba(25, 135, 84, 0.85)', 
+                                'rgba(13, 202, 240, 0.85)',  
+                                'rgba(255, 193, 7, 0.85)'  
+                            ],
+                            borderColor: [
+                                'rgb(25, 135, 84)',
+                                'rgb(13, 202, 240)',
+                                'rgb(255, 193, 7)'
+                            ],
+                            borderWidth: 1,
+                            cutout: '75%'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    usePointStyle: true,
+                                    boxWidth: 8,
+                                    font: { family: 'system-ui', size: 11 }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const valor = context.raw;
+                                        const total = data.total;
+                                        const pct = total > 0 ? ((valor / total) * 100).toFixed(1) : 0;
+                                        return ` ${context.label}: ${valor} tickets (${pct}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Error al cargar gráfica de efectividad:', error));
+    }
 
 </script>
+
+<script>
+    let chartCategoriasInstancia = null;
+
+    document.addEventListener("DOMContentLoaded", function () {
+        cargarGraficaCategoriasApilada();
+    });
+
+    function cargarGraficaCategoriasApilada() {
+        // Apuntamos al nuevo endpoint de barras apiladas
+        fetch('/Dashboard/ObtenerResueltosPorCategoriaApilada')
+            .then(response => {
+                if (!response.ok) throw new Error("Error al obtener datos apilados");
+                return response.json();
+            })
+            .then(data => {
+                const ctx = document.getElementById('chartCategoriasSub').getContext('2d');
+                if (!ctx) return;
+
+                if (chartCategoriasInstancia !== null) {
+                    chartCategoriasInstancia.destroy();
+                }
+
+                // Generador dinámico de colores RGBA para que cada subcategoría tenga un color único
+                const paletaColores = [
+                    'rgba(25, 135, 84, 0.8)',   // Verde base
+                    'rgba(13, 110, 253, 0.8)',  // Azul
+                    'rgba(255, 193, 7, 0.8)',   // Amarillo
+                    'rgba(13, 202, 240, 0.8)',  // Celeste
+                    'rgba(111, 66, 193, 0.8)',  // Púrpura
+                    'rgba(253, 126, 20, 0.8)',  // Naranja
+                    'rgba(32, 201, 151, 0.8)'   // Teal
+                ];
+
+                // Inyectamos configuraciones visuales a cada conjunto de datos del backend
+                const datasetsConfigurados = data.datasets.map((dataset, index) => {
+                    const colorSeleccionado = paletaColores[index % paletaColores.length];
+                    return {
+                        label: dataset.label,
+                        data: dataset.data,
+                        backgroundColor: colorSeleccionado,
+                        borderColor: colorSeleccionado.replace('0.8', '1'), // Color sólido para el borde
+                        borderWidth: 1,
+                        barPercentage: 0.6,
+                        categoryPercentage: 0.7
+                    };
+                });
+
+                chartCategoriasInstancia = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.categorias, // Categorías principales en el Eje X
+                        datasets: datasetsConfigurados // Subcategorías apiladas
+                    },
+                    plugins: [ChartDataLabels],
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom', // Mostramos la leyenda abajo para identificar las subcategorías
+                                labels: { usePointStyle: true, font: { family: 'system-ui', size: 11 } }
+                            },
+                            tooltip: { mode: 'index', intersect: false },
+                            datalabels: {
+                                anchor: 'center', // Centra la cantidad fija dentro de cada bloque apilado
+                                align: 'center',
+                                font: { weight: 'bold', size: 10, family: 'system-ui' },
+                                color: '#ffffff', // Letras blancas para contrastar con las barras
+                                formatter: value => value > 0 ? value : '' // Oculta ceros
+                            }
+                        },
+                        scales: {
+                            // CLAVE: Activamos 'stacked: true' en ambos ejes para habilitar el apilamiento
+                            x: {
+                                stacked: true,
+                                grid: { display: false }
+                            },
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                ticks: { stepSize: 1, precision: 0 },
+                                grace: '10%'
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Error al cargar gráfica apilada:', error));
+    }
+</script>
+
