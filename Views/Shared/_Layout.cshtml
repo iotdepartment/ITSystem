@@ -1,5 +1,6 @@
 ﻿@using Microsoft.AspNetCore.Http
 @inject IHttpContextAccessor HttpContextAccessor
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment WebHostEnvironment
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,132 +8,190 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - ITSystem</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <!-- Iconos de bootstrap para el menú de usuario -->
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Eliminado enlace externo de jsdelivr para evitar el error ERR_CONNECTION_TIMED_OUT -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ITSystem.styles.css" asp-append-version="true" />
     <link rel="icon" type="image/png" href="~/Images/Logo.png" />
-</head>
-<body class="body-gradient">
-    <header>
-        @{
-            var session = HttpContextAccessor.HttpContext?.Session;
-            var nombreUsuario = session?.GetString("UsuarioNombre");
-            var rolUsuario = session?.GetString("UsuarioRol");
-            var numEmpleado = session?.GetInt32("UsuarioEmpleado") ?? 0;
-
-            var fotoUsuario = numEmpleado > 0 ? $"/Images/{numEmpleado}.jpg" : "/Images/default.png";
-            var esAdminOTecnico = rolUsuario == "Admin" || rolUsuario == "Tecnico";
-
-            // Obtener el nombre del controlador actual
-            var controladorActual = ViewContext.RouteData.Values["Controller"]?.ToString();
+    <style>
+        /* Estilos base para móviles (Pantallas < 992px) */
+        .sidebar-responsive {
+            width: 100%;
+            z-index: 1040;
         }
 
-        <!-- Contenedor de la Barra Lateral -->
-        <div class="d-flex flex-column flex-shrink-0 p-3 text-white bg-dark shadow-lg sidebar-v">
+        .main-content-responsive {
+            margin-top: 56px;
+        }
 
-            <!-- Logo y Título del Sistema -->
-            <a href="/Tickets/Index" class="d-flex align-items-center mb-4 mb-md-0 me-md-auto text-white text-decoration-none gap-2 px-2">
-                <img src="~/Images/Logo.png" alt="Logo" style="height: 40px;" />
-                <span class="fs-6 fw-bold text-nowrap">TGRMX IT Tickets</span>
-            </a>
+        /* Comportamiento exclusivo para Computadora (Pantallas >= 992px) */
+        @@media (min-width: 992px) {
+            .sidebar-responsive {
+                position: fixed !important;
+                top: 0;
+                bottom: 0;
+                left: 0;
+                width: 260px !important;
+                z-index: 1030;
+                display: flex !important; /* Fuerza a estar siempre visible */
+            }
 
-            <hr class="border-secondary my-3">
+            .main-content-responsive {
+                margin-left: 260px;
+                margin-top: 0 !important;
+            }
 
-            <!-- Enlaces de Navegación -->
-            <ul class="nav nav-pills flex-column mb-auto gap-1">
-                <li class="nav-item">
-                    <a href="/Tickets/Index"
-                       class="nav-link d-flex align-items-center gap-2 @(controladorActual == "Tickets" ? "active text-white" : "text-white-50")">
-                        <i class="bi bi-plus-circle"></i> Nuevo Ticket
-                    </a>
-                </li>
+            .navbar-toggler {
+                display: none !important; /* Oculta el botón hamburguesa en PC */
+            }
+        }
+    </style>
+</head>
+<body class="body-gradient">
+    @{
+        var session = HttpContextAccessor.HttpContext?.Session;
+        var nombreUsuario = session?.GetString("UsuarioNombre");
+        var rolUsuario = session?.GetString("UsuarioRol");
+        var numEmpleado = session?.GetInt32("UsuarioEmpleado") ?? 0;
 
-                @if (esAdminOTecnico)
-                {
-                    <li>
-                        <a href="/GestionarTickets/Index"
-                           class="nav-link d-flex align-items-center gap-2 @(controladorActual == "GestionarTickets" ? "active text-white" : "text-white-50")">
-                            <i class="bi bi-ticket-perforated"></i> Gestionar Tickets
+        // SOLUCIÓN AL 404: Validar físicamente si la foto del empleado existe en wwwroot
+        var fotoUsuario = "/Images/default.png";
+        if (numEmpleado > 0)
+        {
+            var rutaFisicaFoto = System.IO.Path.Combine(WebHostEnvironment.WebRootPath, "Images", $"{numEmpleado}.jpg");
+            if (System.IO.File.Exists(rutaFisicaFoto))
+            {
+                fotoUsuario = $"/Images/{numEmpleado}.jpg";
+            }
+        }
+
+        var esAdminOTecnico = rolUsuario == "Admin" || rolUsuario == "Tecnico";
+        var controladorActual = ViewContext.RouteData.Values["Controller"]?.ToString();
+    }
+
+    <!-- Barra superior fija exclusiva para Celulares y Tablets -->
+    <nav class="navbar navbar-dark bg-dark d-lg-none px-3 fixed-top shadow">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <span class="navbar-brand fs-6 fw-bold m-0">TGRMX IT Tickets</span>
+    </nav>
+
+    <div class="container-fluid p-0">
+        <div class="d-flex flex-column flex-lg-row">
+
+            <!-- Contenedor de la Barra Lateral -->
+            <div class="collapse d-lg-flex flex-column p-3 text-white bg-dark shadow-lg sidebar-responsive fixed-top h-auto m-0 border-0" id="sidebarMenu">
+
+                <div class="pt-4 pt-lg-0 d-flex flex-column h-100 w-100">
+
+                    <!-- Encabezado de la barra lateral -->
+                    <div class="d-flex align-items-center mb-4 px-2 mt-3 mt-lg-0">
+                        <a href="/Tickets/Index" class="d-flex align-items-center text-white text-decoration-none gap-2">
+                            <img src="~/Images/Logo.png" alt="Logo" style="height: 40px;" />
+                            <span class="fs-6 fw-bold text-nowrap">TGRMX IT Tickets</span>
                         </a>
-                    </li>
-                    <li>
-                        <a href="/Areas/Index"
-                           class="nav-link d-flex align-items-center gap-2 @(controladorActual == "Areas" ? "active text-white" : "text-white-50")">
-                            <i class="bi bi-diagram-3"></i> Áreas
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/Usuarios/Index"
-                           class="nav-link d-flex align-items-center gap-2 @(controladorActual == "Usuarios" ? "active text-white" : "text-white-50")">
-                            <i class="bi bi-people"></i> Usuarios
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/Categorias/Index"
-                           class="nav-link d-flex align-items-center gap-2 @(controladorActual == "Categorias" ? "active text-white" : "text-white-50")">
-                            <i class="bi bi-tags"></i> Categorías
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/Dashboard/Index"
-                           class="nav-link d-flex align-items-center gap-2 @(controladorActual == "Dashboard" ? "active text-white" : "text-white-50")">
-                            <i class="bi bi-speedometer2"></i> Dashboard
-                        </a>
-                    </li>
-                }
-                <li>
-                    <a href="#" class="nav-link text-white-50 d-flex align-items-center gap-2">
-                        <i class="bi bi-question-circle"></i> Ayuda
-                    </a>
-                </li>
-            </ul>
+                    </div>
 
-            <hr class="border-secondary my-3">
+                    <hr class="border-secondary my-2">
 
-            <!-- Sección del Usuario (Fondo del menú) -->
-            <div class="dropdown">
-                @if (!string.IsNullOrEmpty(nombreUsuario))
-                {
-                    <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle bg-secondary bg-opacity-25 p-2 rounded gap-2"
-                       id="userDropdownSide" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="@fotoUsuario" alt="Perfil" class="rounded-circle border border-white" style="width: 32px; height: 32px; object-fit: cover;" />
-                        <div class="d-flex flex-column min-w-0 flex-grow-1">
-                            <span class="fw-bold text-truncate small">@nombreUsuario</span>
-                            <span class="badge bg-secondary font-monospace alignment-badge align-self-start" style="font-size: 0.65rem;">@rolUsuario</span>
-                        </div>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-dark shadow border-0 w-100" aria-labelledby="userDropdownSide">
+                    <!-- Enlaces de Navegación -->
+                    <ul class="nav nav-pills flex-column mb-auto gap-1">
+                        <li class="nav-item">
+                            <a href="/Tickets/Index"
+                               class="nav-link d-flex align-items-center gap-2 @(controladorActual == "Tickets" ? "active text-white" : "text-white-50")">
+                                <i class="bi bi-plus-circle"></i> Nuevo Ticket
+                            </a>
+                        </li>
+
+                        @if (esAdminOTecnico)
+                        {
+                            <li>
+                                <a href="/GestionarTickets/Index"
+                                   class="nav-link d-flex align-items-center gap-2 @(controladorActual == "GestionarTickets" ? "active text-white" : "text-white-50")">
+                                    <i class="bi bi-ticket-perforated"></i> Gestionar Tickets
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/Areas/Index"
+                                   class="nav-link d-flex align-items-center gap-2 @(controladorActual == "Areas" ? "active text-white" : "text-white-50")">
+                                    <i class="bi bi-diagram-3"></i> Áreas
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/Usuarios/Index"
+                                   class="nav-link d-flex align-items-center gap-2 @(controladorActual == "Usuarios" ? "active text-white" : "text-white-50")">
+                                    <i class="bi bi-people"></i> Usuarios
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/Categorias/Index"
+                                   class="nav-link d-flex align-items-center gap-2 @(controladorActual == "Categorias" ? "active text-white" : "text-white-50")">
+                                    <i class="bi bi-tags"></i> Categorías
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/Dashboard/Index"
+                                   class="nav-link d-flex align-items-center gap-2 @(controladorActual == "Dashboard" ? "active text-white" : "text-white-50")">
+                                    <i class="bi bi-speedometer2"></i> Dashboard
+                                </a>
+                            </li>
+                        }
                         <li>
-                            <a class="dropdown-item text-danger d-flex align-items-center gap-2 layout-logout" href="/Login/Logout">
-                                <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                            <a href="#" class="nav-link text-white-50 d-flex align-items-center gap-2">
+                                <i class="bi bi-question-circle"></i> Ayuda
                             </a>
                         </li>
                     </ul>
-                }
-                else
-                {
-                    <a class="btn btn-outline-light w-100 rounded" href="/Login/Index">
-                        <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
-                    </a>
-                }
-            </div>
-        </div>
-    </header>
 
-    <div class="d-flex">
-        <main class="flex-grow-1 p-4" style="margin-left: 260px;">
-            @RenderBody()
-        </main>
+                    <hr class="border-secondary my-3">
+
+                    <!-- Sección del Usuario -->
+                    <div class="dropdown mb-2">
+                        @if (!string.IsNullOrEmpty(nombreUsuario))
+                        {
+                            <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle bg-secondary bg-opacity-25 p-2 rounded gap-2"
+                               id="userDropdownSide" data-bs-toggle="dropdown" aria-expanded="false">
+                                <img src="@fotoUsuario" alt="Perfil" class="rounded-circle border border-white" style="width: 32px; height: 32px; object-fit: cover;" />
+                                <div class="d-flex flex-column min-w-0 flex-grow-1">
+                                    <span class="fw-bold text-truncate small">@nombreUsuario</span>
+                                    <span class="badge bg-secondary font-monospace alignment-badge align-self-start" style="font-size: 0.65rem;">@rolUsuario</span>
+                                </div>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark shadow border-0 w-100" aria-labelledby="userDropdownSide">
+                                <li>
+                                    <a class="dropdown-item text-danger d-flex align-items-center gap-2 layout-logout" href="/Login/Logout">
+                                        <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                                    </a>
+                                </li>
+                            </ul>
+                        }
+                        else
+                        {
+                            <a class="btn btn-outline-light w-100 rounded" href="/Login/Index">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contenedor Principal dinámico -->
+            <main class="flex-grow-1 p-4 main-content-responsive">
+                @RenderBody()
+            </main>
+
+        </div>
     </div>
 
-    <footer class="footer text-muted text-center">
+    <footer class="footer text-muted text-center py-3">
         <div class="container text-black fw-bold">
             © TGRMX Iot Department 2026
         </div>
     </footer>
 
+    <!-- Scripts Locales -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
