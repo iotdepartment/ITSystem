@@ -5,6 +5,39 @@
     <div class="card mb-4 p-3 border Charts-style-glass">
         <h2 class="m-0 text-start fw-bold">Graficas de Rendimiento</h2>
     </div>
+
+    <!-- FILTRO DE FECHAS GLOBAL PARA EL DASHBOARD (AHORA FLOTANTE STICKY) -->
+    <div class="row mb-4" style="position: sticky; top: 0; z-index: 1020;">
+        <div class="col-12">
+            <div class="card Charts-style-glass shadow border-0">
+                <div class="card-body p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-calendar-alt text-primary fs-5"></i>
+                        <h6 class="mb-0 fw-bold text-dark">Filtrar Todo el Dashboard por Rango de Fechas:</h6>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <div class="input-group input-group-sm" style="width: 200px;">
+                            <span class="input-group-text bg-light text-muted">Desde</span>
+                            <input type="date" id="globalFechaInicio" class="form-control">
+                        </div>
+                        <div class="input-group input-group-sm" style="width: 200px;">
+                            <span class="input-group-text bg-light text-muted">Hasta</span>
+                            <input type="date" id="globalFechaFin" class="form-control">
+                        </div>
+                        <button type="button" id="btnAplicarFiltroGlobal" class="btn btn-sm btn-primary rounded-pill px-3">
+                            <i class="fas fa-sync me-1"></i>Aplicar Filtro
+                        </button>
+                        <button type="button" id="btnLimpiarFiltroGlobal" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                            <i class="fas fa-eraser me-1"></i>Limpiar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <div class="row mb-4">
         <div class="col-9">
             <div class="card Charts-style-glass h-100">
@@ -18,7 +51,6 @@
                 </div>
                 <div class="card-body p-4">
                     <div style="position: relative; height: 320px; width: 100%;">
-                        <!-- El lienzo donde Chart.js pintará la gráfica -->
                         <canvas id="chartTicketsAnual"></canvas>
                     </div>
                 </div>
@@ -53,9 +85,6 @@
                     <h5 class="card-title mb-0 fw-bold text-dark">
                         <i class="fas fa-user-tie me-2 text-info"></i>Carga de Trabajo: Tickets Activos por Técnico
                     </h5>
-                    <span class="badge bg-light text-muted fw-normal px-3 py-2 rounded-pill border">
-                        Métricas del año en curso
-                    </span>
                 </div>
                 <div class="card-body p-4">
                     <div style="position: relative; height: 350px; width: 100%;">
@@ -111,9 +140,6 @@
                     <h5 class="card-title mb-0 fw-bold text-dark">
                         <i class="fas fa-tasks me-2 text-primary"></i>Distribución de Tickets por Estado Actual
                     </h5>
-                    <span class="badge bg-light text-muted fw-normal px-3 py-2 rounded-pill border">
-                        Métricas del año en curso
-                    </span>
                 </div>
 
                 <div class="card-body p-4">
@@ -136,7 +162,6 @@
                     </h5>
                 </div>
                 <div class="card-body p-4">
-                    <!-- Se asigna una altura cómoda de 350px para ver las barras con espacio -->
                     <div style="position: relative; height: 350px; width: 100%;">
                         <canvas id="chartCategoriasSub"></canvas>
                     </div>
@@ -152,32 +177,42 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
+       // Variable de respaldo global
+    let chartAnualInstancia = null;
 
-        const lblAnio = document.getElementById('lblAnioActual');
-        if (lblAnio) lblAnio.textContent = new Date().getFullYear();
+    function cargarGraficaTickets(inicio = '', fin = '') {
+        let url = `/Dashboard/ObtenerMetricasAnuales?inicio=${inicio}&fin=${fin}`;
 
-  
-        cargarGraficaTickets();
-    });
-
-    function cargarGraficaTickets() {
-        fetch('/Dashboard/ObtenerMetricasAnuales')
+        fetch(url)
             .then(response => response.json())
             .then(data => {
-                const ctx = document.getElementById('chartTicketsAnual').getContext('2d')
+                const canvasElement = document.getElementById('chartTicketsAnual');
+                if (!canvasElement) return;
+
+                const ctx = canvasElement.getContext('2d');
+                const graficoExistenteEnCanvas = Chart.getChart("chartTicketsAnual");
+                if (graficoExistenteEnCanvas) {
+                    graficoExistenteEnCanvas.destroy();
+                }
+
+                // Reiniciamos nuestra variable de control por seguridad
+                if (chartAnualInstancia !== null) {
+                    try { chartAnualInstancia.destroy(); } catch(e) {}
+                    chartAnualInstancia = null;
+                }
 
                 const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-                new Chart(ctx, {
-                    type: 'bar', 
+                // Creamos la instancia limpiamente sobre el lienzo garantizado desocupado
+                chartAnualInstancia = new Chart(ctx, {
+                    type: 'bar',
                     data: {
                         labels: meses,
                         datasets: [
                             {
                                 label: 'Tickets Generados',
                                 data: data.creados,
-                                backgroundColor: 'rgba(13, 110, 253, 0.75)', 
+                                backgroundColor: 'rgba(13, 110, 253, 0.75)',
                                 borderColor: 'rgb(13, 110, 253)',
                                 borderWidth: 1,
                                 borderRadius: 6,
@@ -187,7 +222,7 @@
                             {
                                 label: 'Tickets Cerrados',
                                 data: data.cerrados,
-                                backgroundColor: 'rgba(25, 135, 84, 0.75)', 
+                                backgroundColor: 'rgba(25, 135, 84, 0.75)',
                                 borderColor: 'rgb(25, 135, 84)',
                                 borderWidth: 1,
                                 borderRadius: 6,
@@ -196,7 +231,6 @@
                             }
                         ]
                     },
-
                     plugins: [ChartDataLabels],
                     options: {
                         responsive: true,
@@ -204,79 +238,70 @@
                         plugins: {
                             legend: {
                                 position: 'top',
-                                labels: {
-                                    usePointStyle: true,
-                                    boxWidth: 10,
-                                    font: { weight: 'bold', family: 'system-ui' }
-                                }
+                                labels: { usePointStyle: true, boxWidth: 10, font: { weight: 'bold', family: 'system-ui' } }
                             },
-                            tooltip: {
-                                mode: 'index',
-                                intersect: false,
-                                padding: 12
-                            },
-                     
+                            tooltip: { mode: 'index', intersect: false, padding: 12 },
                             datalabels: {
-                                anchor: 'end',      
-                                align: 'top',       
-                                offset: 2,           
-                                font: {
-                                    weight: 'bold',
-                                    size: 11,
-                                    family: 'system-ui'
-                                },
-                        
-                                formatter: function(value) {
-                                    return value > 0 ? value : '';
-                                },
-                        
-                                color: function(context) {
-                                    return context.dataset.borderColor;
-                                }
+                                anchor: 'end',
+                                align: 'top',
+                                offset: 2,
+                                font: { weight: 'bold', size: 11, family: 'system-ui' },
+                                formatter: value => value > 0 ? value : '',
+                                color: context => context.dataset.borderColor
                             }
                         },
                         scales: {
-                            x: {
-                                grid: { display: false } 
-                            },
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    stepSize: 1,
-                                    precision: 0
-                                },
-                                grace: '10%' 
-                            }
+                            x: { grid: { display: false } },
+                            y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, grace: '10%' }
                         }
                     }
                 });
             })
             .catch(error => console.error('Error al cargar la gráfica del dashboard:', error));
     }
+
 </script>
 
-
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const lblAnio = document.getElementById('lblAnioActual');
-        if (lblAnio) lblAnio.textContent = new Date().getFullYear();
-        cargarGraficaCumplimiento();
-    });
+    // Variable global que mantendrá viva la estructura base de la gráfica en la memoria del navegador
+    let chartCumplimientoInstancia = null;
 
-    function cargarGraficaCumplimiento() {
-        fetch('/Dashboard/ObtenerPorcentajeCumplimiento')
+    function cargarGraficaCumplimiento(inicio = '', fin = '') {
+        // Construimos la URL agregando las variables del filtro global
+        let url = `/Dashboard/ObtenerPorcentajeCumplimiento?inicio=${inicio}&fin=${fin}`;
+
+        fetch(url)
             .then(response => {
                 if (!response.ok) throw new Error("Error al obtener métricas de cumplimiento");
                 return response.json();
             })
             .then(data => {
+                // 1. Actualizar el texto numérico grande debajo de la dona
                 const txtPorcentaje = document.getElementById('txtPorcentajeGranTotal');
                 if (txtPorcentaje) txtPorcentaje.textContent = `${data.porcentajeCumplimiento}%`;
 
                 const ctx = document.getElementById('chartCumplimiento').getContext('2d');
                 if (!ctx) return;
+                if (chartCumplimientoInstancia !== null) {
+                    // Reemplazamos los valores viejos por los nuevos datos filtrados
+                    chartCumplimientoInstancia.data.datasets[0].data = [data.resueltos, data.pendientes];
 
-                new Chart(ctx, {
+                    // Actualizamos la tooltip para que use el nuevo 'data.total' recalculado
+                    chartCumplimientoInstancia.options.plugins.tooltip.callbacks.label = function(context) {
+                        const valor = context.raw;
+                        const total = data.total;
+                        const pct = total > 0 ? ((valor / total) * 100).toFixed(1) : 0;
+                        return ` ${context.label}: ${valor} tickets (${pct}%)`;
+                    };
+
+                    chartCumplimientoInstancia.update({
+                        duration: 800,
+                        easing: 'easeOutQuart'
+                    });
+
+                    return; 
+                }
+                chartCumplimientoInstancia = new Chart(ctx, {
                     type: 'doughnut',
                     data: {
                         labels: ['Resueltos', 'Pendientes / Otros'],
@@ -284,19 +309,26 @@
                             data: [data.resueltos, data.pendientes],
                             backgroundColor: [
                                 'rgba(25, 135, 84, 0.85)',  
-                                'rgba(220, 53, 69, 0.15)'  
+                                'rgba(220, 53, 69, 0.15)'   
                             ],
                             borderColor: [
                                 'rgb(25, 135, 84)',
                                 'rgba(220, 53, 69, 0.4)'
                             ],
                             borderWidth: 1,
-                            cutout: '75%' 
+                            cutout: '75%'
                         }]
                     },
+                    plugins: [ChartDataLabels],
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        // Configuración de la animación inicial de entrada
+                        animation: {
+                            duration: 1000,
+                            animateRotate: true,
+                            animateScale: false
+                        },
                         plugins: {
                             legend: {
                                 position: 'bottom',
@@ -315,49 +347,80 @@
                                         return ` ${context.label}: ${valor} tickets (${pct}%)`;
                                     }
                                 }
+                            },
+                            datalabels: {
+                                anchor: 'center',
+                                align: 'center',
+                                font: {
+                                    weight: 'bold',
+                                    size: 13,
+                                    family: 'system-ui'
+                                },
+                                formatter: function(value) {
+                                    return value > 0 ? value : '';
+                                },
+                                color: function(context) {
+                                    return context.dataIndex === 0 ? '#ffffff' : 'rgb(220, 53, 69)';
+                                }
                             }
                         }
                     }
                 });
             })
-            .catch(error => console.error('Error al cargar gráfica de cumplimiento:', error));
+            .catch(error => console.error('Error al cargar gráfica de cumplimiento filtrada:', error));
     }
 </script>
 
+
+
 <script>
+    // Variable global de respaldo para el control de la gráfica de técnicos
     let chartTecnicosInstancia = null;
 
     document.addEventListener("DOMContentLoaded", function () {
         const lblAnio = document.getElementById('lblAnioActual');
         if (lblAnio) lblAnio.textContent = new Date().getFullYear();
 
+        // Carga inicial sin parámetros (tomará los valores por defecto)
         cargarGraficaPorTecnico();
     });
 
-    function cargarGraficaPorTecnico() {
-        fetch('/Dashboard/ObtenerTicketsPorTecnico')
+    // Modificado: Ahora recibe los parámetros opcionales del rango global de fechas
+    function cargarGraficaPorTecnico(inicio = '', fin = '') {
+        // Construimos la URL dinámica inyectando las variables de fecha
+        let url = `/Dashboard/ObtenerTicketsPorTecnico?inicio=${inicio}&fin=${fin}`;
+
+        fetch(url)
             .then(response => {
                 if (!response.ok) throw new Error("Error al obtener carga detallada por técnico");
                 return response.json();
             })
             .then(data => {
-                const ctx = document.getElementById('chartTicketsPorTecnico').getContext('2d');
-                if (!ctx) return;
+                const canvasElement = document.getElementById('chartTicketsPorTecnico');
+                if (!canvasElement) return;
 
-       
-                if (chartTecnicosInstancia !== null) {
-                    chartTecnicosInstancia.destroy();
+                const ctx = canvasElement.getContext('2d');
+
+                const graficoExistenteEnCanvas = Chart.getChart("chartTicketsPorTecnico");
+                if (graficoExistenteEnCanvas) {
+                    graficoExistenteEnCanvas.destroy(); // Desaloja y limpia el hardware de inmediato
                 }
 
-              
+                // Limpieza preventiva de nuestra variable de control
+                if (chartTecnicosInstancia !== null) {
+                    try { chartTecnicosInstancia.destroy(); } catch(e) {}
+                    chartTecnicosInstancia = null;
+                }
+
+                // Construimos la gráfica sobre el canvas garantizado desocupado
                 chartTecnicosInstancia = new Chart(ctx, {
                     type: 'bar',
                     data: {
-                        labels: data.tecnicos,
+                        labels: data.tecnicos, 
                         datasets: [
                             {
                                 label: 'Tickets Asignados (Activos)',
-                                data: data.activos,
+                                data: data.activos, 
                                 backgroundColor: 'rgba(0, 191, 165, 0.75)',
                                 borderColor: 'rgb(0, 150, 136)',
                                 borderWidth: 1,
@@ -367,7 +430,7 @@
                             },
                             {
                                 label: 'Tickets Cerrados (Histórico)',
-                                data: data.cerrados,
+                                data: data.cerrados, 
                                 backgroundColor: 'rgba(25, 135, 84, 0.75)',
                                 borderColor: 'rgb(25, 135, 84)',
                                 borderWidth: 1,
@@ -377,10 +440,9 @@
                             }
                         ]
                     },
-                  
                     plugins: [ChartDataLabels],
                     options: {
-                        indexAxis: 'y',
+                        indexAxis: 'y', 
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
@@ -396,21 +458,18 @@
                                 mode: 'index',
                                 intersect: false
                             },
-                      
                             datalabels: {
-                                anchor: 'end',      
-                                align: 'right',      
-                                offset: 4,         
+                                anchor: 'end',
+                                align: 'right',
+                                offset: 4,
                                 font: {
                                     weight: 'bold',
                                     size: 11,
                                     family: 'system-ui'
                                 },
-                           
                                 formatter: function(value) {
-                                    return value > 0 ? value : '';
+                                    return value > 0 ? value : ''; 
                                 },
-                             
                                 color: function(context) {
                                     return context.dataset.borderColor;
                                 }
@@ -428,7 +487,6 @@
                                     text: 'Cantidad de Tickets',
                                     font: { weight: 'bold' }
                                 },
- 
                                 grace: '8%'
                             },
                             y: {
@@ -442,15 +500,25 @@
     }
 </script>
 
+
 <script>
+    // Variable global para mantener viva la estructura de la gráfica en memoria RAM
     let chartTiemposInstancia = null;
 
     document.addEventListener("DOMContentLoaded", function () {
+        // Carga inicial automática sin parámetros al abrir la página
         cargarGraficaTiempos();
     });
 
-    function cargarGraficaTiempos() {
-        fetch('/Dashboard/ObtenerTiemposPromedio')
+    
+    function cargarGraficaTiempos(inicio = '', fin = '') {
+       
+        let url = '/Dashboard/ObtenerTiemposPromedio';
+        if (inicio.trim() !== '' && fin.trim() !== '') {
+            url += `?inicio=${inicio}&fin=${fin}`;
+        }
+
+        fetch(url)
             .then(response => {
                 if (!response.ok) throw new Error("Error al obtener tiempos promedio");
                 return response.json();
@@ -459,14 +527,26 @@
                 const ctx = document.getElementById('chartTiemposRespuesta').getContext('2d');
                 if (!ctx) return;
 
-               
                 if (chartTiemposInstancia !== null) {
-                    chartTiemposInstancia.destroy();
+                    chartTiemposInstancia.data.datasets[0].data = data.atencion; 
+                    chartTiemposInstancia.data.datasets[1].data = data.solucion; 
+
+                    chartTiemposInstancia.update({
+                        duration: 800,
+                        easing: 'easeOutQuart' 
+                    });
+                    return; 
+                }
+
+                // BLINDAJE DE HARDWARE: Desalojo preventivo en el mapa de renderizado de Chart.js
+                const graficoExistenteEnCanvas = Chart.getChart("chartTiemposRespuesta");
+                if (graficoExistenteEnCanvas) {
+                    graficoExistenteEnCanvas.destroy();
                 }
 
                 const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-             
+                // CARGA INICIAL: Primera vez que se dibuja en la pantalla
                 chartTiemposInstancia = new Chart(ctx, {
                     type: 'line',
                     data: {
@@ -494,32 +574,31 @@
                             }
                         ]
                     },
-                    
                     plugins: [ChartDataLabels],
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        animation: {
+                            duration: 1000 // Animación de entrada inicial
+                        },
                         plugins: {
                             legend: { position: 'top' },
                             tooltip: { mode: 'index', intersect: false },
-                       
                             datalabels: {
-                                anchor: 'end',       
-                                align: 'top',      
-                                offset: 4,           
+                                anchor: 'end',
+                                align: 'top',
+                                offset: 4,
                                 font: {
                                     weight: 'bold',
                                     size: 10,
                                     family: 'system-ui'
                                 },
-                               
                                 formatter: function(value, context) {
-                                    if (value === 0) return '';
+                                    if (value === 0) return ''; // Esconde ceros para no amontonar las líneas
 
-                                 
+                                    // Agrega sufijo interactivo (hrs para dataset 0, d para dataset 1)
                                     return context.datasetIndex === 0 ? value + ' hrs' : value + ' d';
                                 },
-       
                                 color: function(context) {
                                     return context.dataset.borderColor;
                                 }
@@ -532,7 +611,7 @@
                                 title: { display: true, text: 'Horas (Atención)' },
                                 beginAtZero: true,
                                 grid: { drawOnChartArea: true },
-                                grace: '12%' 
+                                grace: '12%' // Colchón arriba para evitar que los números hrs se corten
                             },
                             yDias: {
                                 type: 'linear',
@@ -540,7 +619,7 @@
                                 title: { display: true, text: 'Días (Solución)' },
                                 beginAtZero: true,
                                 grid: { drawOnChartArea: false },
-                                grace: '12%'
+                                grace: '12%' // Colchón arriba en el eje derecho para los números d
                             },
                             x: { grid: { display: false } }
                         }
@@ -552,22 +631,50 @@
 </script>
 
 
+
 <script>
-    // Variable para controlar la instancia del gráfico en la memoria del navegador
+    // Variable global para controlar la instancia del gráfico en la memoria del navegador
     let miGraficoEstados = null;
 
     document.addEventListener("DOMContentLoaded", function () {
-        // Carga el volumen anual de inmediato
+        // Carga inicial por defecto al abrir el Dashboard (usa el rango anual automático)
         cargarGraficaEstadosAnual();
     });
 
-    function cargarGraficaEstadosAnual() {
-        fetch('/Dashboard/ObtenerVolumenPorEstado')
+    // Modificado: Ahora recibe los parámetros opcionales del filtro por fechas global
+    function cargarGraficaEstadosAnual(inicio = '', fin = '') {
+        // Construimos la URL dinámica agregando las variables de filtrado
+        let url = '/Dashboard/ObtenerVolumenPorEstado';
+        if (inicio.trim() !== '' && fin.trim() !== '') {
+            url += `?inicio=${inicio}&fin=${fin}`;
+        }
+
+        fetch(url)
             .then(response => {
-                if (!response.ok) throw new Error("Error al obtener volumen anual de estados");
+                if (!response.ok) throw new Error("Error al obtener volumen de estados");
                 return response.json();
             })
             .then(data => {
+                // =========================================================================
+                // MODO FLUIDO: Si la gráfica YA EXISTE, mutamos sus valores internos.
+                // Esto hace que las barras suban y bajen de forma elástica y sin parpadeos.
+                // =========================================================================
+                if (miGraficoEstados !== null) {
+                    miGraficoEstados.data.datasets[0].data = data.totales;
+                    miGraficoEstados.update({
+                        duration: 800,
+                        easing: 'easeOutQuart' // Curva de transición estilizada
+                    });
+                    return; // Detiene el flujo para evitar el error "Canvas is already in use"
+                }
+
+                // Si no existe la instancia física en la variable pero el Canvas está ocupado internamente, lo liberamos
+                const graficoExistenteEnCanvas = Chart.getChart("chartEstadosTickets");
+                if (graficoExistenteEnCanvas) {
+                    graficoExistenteEnCanvas.destroy();
+                }
+
+                // Ejecuta el constructor inicial la primera vez que abre la página
                 renderizarGraficaEstadosCanvas(data.estados, data.totales);
             })
             .catch(error => console.error('Error al cargar gráfica de estados:', error));
@@ -576,11 +683,6 @@
     function renderizarGraficaEstadosCanvas(labels, valores) {
         const ctx = document.getElementById('chartEstadosTickets').getContext('2d');
         if (!ctx) return;
-
-        // Limpieza de caché gráfica previa para evitar duplicación de texto
-        if (miGraficoEstados !== null) {
-            miGraficoEstados.destroy();
-        }
 
         const coloresFondo = [
             'rgba(220, 53, 69, 0.75)',  // Rojo - Por Atender
@@ -613,6 +715,9 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: {
+                    duration: 1000 // Animación de entrada inicial
+                },
                 plugins: {
                     legend: { display: false },
                     datalabels: {
@@ -637,7 +742,7 @@
                     y: {
                         beginAtZero: true,
                         ticks: { stepSize: 1, precision: 0 },
-                        grace: '10%' // Añade espacio arriba para que el número anual más alto no se corte
+                        grace: '10%'
                     }
                 }
             }
@@ -646,27 +751,61 @@
 </script>
 
 
+
 <script>
-        document.addEventListener("DOMContentLoaded", function () {
-        // Inicializar junto a tus otras funciones
+    // Variable global para mantener viva la estructura de la dona de efectividad en memoria
+    let chartEfectividadInstancia = null;
+
+    document.addEventListener("DOMContentLoaded", function () {
+        // Carga inicial por defecto al abrir la página
         cargarGraficaEfectividad();
     });
 
-    function cargarGraficaEfectividad() {
-        fetch('/Dashboard/ObtenerEfectividadResolucion')
+    // Modificado: Ahora acepta los parámetros del rango de fechas global
+    function cargarGraficaEfectividad(inicio = '', fin = '') {
+        // Construimos la URL dinámica agregando las variables del filtro
+        let url = `/Dashboard/ObtenerEfectividadResolucion?inicio=${inicio}&fin=${fin}`;
+
+        fetch(url)
             .then(response => {
                 if (!response.ok) throw new Error("Error al obtener datos de efectividad");
                 return response.json();
             })
             .then(data => {
-                // Actualizar indicador central de FCR (Primera visita)
+                // Actualizar indicador central de FCR (Primera visita) con el nuevo cálculo
                 const txtFcr = document.getElementById('txtFcrPorcentaje');
                 if (txtFcr) txtFcr.textContent = `${data.fcr}%`;
 
                 const ctx = document.getElementById('chartEfectividadResolucion').getContext('2d');
                 if (!ctx) return;
 
-                new Chart(ctx, {
+                if (chartEfectividadInstancia !== null) {
+                    // Inyectamos las nuevas cantidades filtradas
+                    chartEfectividadInstancia.data.datasets[0].data = [data.primera, data.segunda, data.extendido];
+
+                    // Actualizamos la tooltip para que use el nuevo 'data.total' recalculado
+                    chartEfectividadInstancia.options.plugins.tooltip.callbacks.label = function(context) {
+                        const valor = context.raw;
+                        const total = data.total;
+                        const pct = total > 0 ? ((valor / total) * 100).toFixed(1) : 0;
+                        return ` ${context.label}: ${valor} tickets (${pct}%)`;
+                    };
+
+                    // Disparamos la actualización progresiva elástica (duración de 800ms)
+                    chartEfectividadInstancia.update({
+                        duration: 800,
+                        easing: 'easeOutQuart'
+                    });
+
+                    return; 
+                }
+ 
+                const graficoExistenteEnCanvas = Chart.getChart("chartEfectividadResolucion");
+                if (graficoExistenteEnCanvas) {
+                    graficoExistenteEnCanvas.destroy();
+                }
+
+                chartEfectividadInstancia = new Chart(ctx, {
                     type: 'doughnut',
                     data: {
                         labels: ['Primera Visita', 'Segunda Visita', 'Tiempo Extendido'],
@@ -675,7 +814,7 @@
                             backgroundColor: [
                                 'rgba(25, 135, 84, 0.85)', 
                                 'rgba(13, 202, 240, 0.85)',  
-                                'rgba(255, 193, 7, 0.85)'  
+                                'rgba(255, 193, 7, 0.85)'    
                             ],
                             borderColor: [
                                 'rgb(25, 135, 84)',
@@ -686,9 +825,15 @@
                             cutout: '75%'
                         }]
                     },
+                    // PASO 1: Inyectamos el plugin para renderizar las cantidades fijas en la dona
+                    plugins: [ChartDataLabels],
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        animation: {
+                            duration: 1000,
+                            animateRotate: true
+                        },
                         plugins: {
                             legend: {
                                 position: 'bottom',
@@ -707,6 +852,22 @@
                                         return ` ${context.label}: ${valor} tickets (${pct}%)`;
                                     }
                                 }
+                            },
+                            // PASO 2: Configuración de diseño para colocar los números fijos centrados en los arcos
+                            datalabels: {
+                                anchor: 'center',    // Centra el número a la mitad del bloque de color
+                                align: 'center',
+                                font: {
+                                    weight: 'bold',
+                                    size: 12,
+                                    family: 'system-ui'
+                                },
+                                // Oculta la etiqueta si la cantidad es 0 para mantener limpia la UI
+                                formatter: value => value > 0 ? value : '',
+                                color: function(context) {
+                                    // Letra blanca para la sección verde o celeste, letra gris oscura para la sección amarilla
+                                    return context.dataIndex === 2 ? '#333333' : '#ffffff';
+                                }
                             }
                         }
                     }
@@ -714,19 +875,27 @@
             })
             .catch(error => console.error('Error al cargar gráfica de efectividad:', error));
     }
-
 </script>
 
+
 <script>
+    // Variable global para mantener viva la estructura de la gráfica apilada en memoria
     let chartCategoriasInstancia = null;
 
     document.addEventListener("DOMContentLoaded", function () {
+        // Carga inicial por defecto al abrir la página (usa el rango anual automático)
         cargarGraficaCategoriasApilada();
     });
 
-    function cargarGraficaCategoriasApilada() {
-        // Apuntamos al nuevo endpoint de barras apiladas
-        fetch('/Dashboard/ObtenerResueltosPorCategoriaApilada')
+    // Modificado: Ahora recibe los parámetros del rango de fechas global
+    function cargarGraficaCategoriasApilada(inicio = '', fin = '') {
+        // Construimos la URL dinámica inyectando las variables de fecha
+        let url = '/Dashboard/ObtenerResueltosPorCategoriaApilada';
+        if (inicio.trim() !== '' && fin.trim() !== '') {
+            url += `?inicio=${inicio}&fin=${fin}`;
+        }
+
+        fetch(url)
             .then(response => {
                 if (!response.ok) throw new Error("Error al obtener datos apilados");
                 return response.json();
@@ -734,10 +903,6 @@
             .then(data => {
                 const ctx = document.getElementById('chartCategoriasSub').getContext('2d');
                 if (!ctx) return;
-
-                if (chartCategoriasInstancia !== null) {
-                    chartCategoriasInstancia.destroy();
-                }
 
                 // Generador dinámico de colores RGBA para que cada subcategoría tenga un color único
                 const paletaColores = [
@@ -764,6 +929,30 @@
                     };
                 });
 
+                // =========================================================================
+                // MODO FLUIDO: Si la gráfica YA EXISTE, mutamos sus valores internos.
+                // Re-mapeamos tanto las nuevas etiquetas del Eje X como los bloques apilados.
+                // =========================================================================
+                if (chartCategoriasInstancia !== null) {
+                    chartCategoriasInstancia.data.labels = data.categorias;
+                    chartCategoriasInstancia.data.datasets = datasetsConfigurados;
+
+                    chartCategoriasInstancia.update({
+                        duration: 800,
+                        easing: 'easeOutQuart' // Curva elástica estilizada
+                    });
+                    return; // Detiene el flujo para evitar conflictos con el lienzo
+                }
+
+                // BLINDAJE DE HARDWARE: Nos aseguramos de desalojar cualquier render previo en el canvas
+                const graficoExistenteEnCanvas = Chart.getChart("chartCategoriasSub");
+                if (graficoExistenteEnCanvas) {
+                    graficoExistenteEnCanvas.destroy();
+                }
+
+                // =========================================================================
+                // CARGA INICIAL: Primera vez que se dibuja en la pantalla
+                // =========================================================================
                 chartCategoriasInstancia = new Chart(ctx, {
                     type: 'bar',
                     data: {
@@ -774,22 +963,24 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        animation: {
+                            duration: 1000 // Animación suave al cargar la vista
+                        },
                         plugins: {
                             legend: {
-                                position: 'bottom', // Mostramos la leyenda abajo para identificar las subcategorías
+                                position: 'bottom',
                                 labels: { usePointStyle: true, font: { family: 'system-ui', size: 11 } }
                             },
                             tooltip: { mode: 'index', intersect: false },
                             datalabels: {
-                                anchor: 'center', // Centra la cantidad fija dentro de cada bloque apilado
+                                anchor: 'center', // Centra las cantidades fijas dentro de cada bloque apilado
                                 align: 'center',
                                 font: { weight: 'bold', size: 10, family: 'system-ui' },
-                                color: '#ffffff', // Letras blancas para contrastar con las barras
-                                formatter: value => value > 0 ? value : '' // Oculta ceros
+                                color: '#ffffff', // Letras blancas para excelente contraste
+                                formatter: value => value > 0 ? value : '' // Esconde ceros innecesarios
                             }
                         },
                         scales: {
-                            // CLAVE: Activamos 'stacked: true' en ambos ejes para habilitar el apilamiento
                             x: {
                                 stacked: true,
                                 grid: { display: false }
@@ -806,5 +997,57 @@
             })
             .catch(error => console.error('Error al cargar gráfica apilada:', error));
     }
+</script>
+
+<script>
+        document.addEventListener("DOMContentLoaded", function () {
+        // 1. Establecer rango por defecto en los inputs (Enero 1 al día de hoy)
+        const anioActual = new Date().getFullYear();
+        const hoy = new Date().toISOString().split('T')[0];
+
+        document.getElementById('globalFechaInicio').value = `${anioActual}-01-01`;
+        document.getElementById('globalFechaFin').value = hoy;
+
+        // Coloca el año en tus etiquetas de interfaz
+        const lblAnio = document.getElementById('lblAnioActual');
+        if (lblAnio) lblAnio.textContent = anioActual;
+
+        // 2. Carga inicial de todas las gráficas
+        actualizarTodoElDashboard();
+
+        // 3. Escuchar clic del botón Aplicar Filtro
+        document.getElementById('btnAplicarFiltroGlobal').addEventListener('click', function() {
+            actualizarTodoElDashboard();
+        });
+
+        // 4. Escuchar clic del botón Limpiar (Regresa al año actual por defecto)
+        document.getElementById('btnLimpiarFiltroGlobal').addEventListener('click', function() {
+            document.getElementById('globalFechaInicio').value = `${anioActual}-01-01`;
+            document.getElementById('globalFechaFin').value = hoy;
+            actualizarTodoElDashboard();
+        });
+    });
+
+    // FUNCIÓN MAESTRA DE CONEXIÓN
+    function actualizarTodoElDashboard() {
+        const inicio = document.getElementById('globalFechaInicio').value;
+        const fin = document.getElementById('globalFechaFin').value;
+
+        // Valida que si se ingresó una fecha, se ingresen ambas
+        if ((inicio && !fin) || (!inicio && fin)) {
+            alert("Por favor, selecciona un rango de fechas completo (Desde y Hasta).");
+            return;
+        }
+
+        // Pasamos los parámetros de manera unificada a todas tus funciones existentes
+        cargarGraficaTickets(inicio, fin);          // Creados vs Cerrados
+        cargarGraficaCumplimiento(inicio, fin);     // Porcentaje de cumplimiento
+        cargarGraficaPorTecnico(inicio, fin);       // Carga por Técnico
+        cargarGraficaTiempos(inicio, fin);          // Tiempos promedio de respuesta
+        cargarGraficaEfectividad(inicio, fin); 
+        cargarGraficaEstadosAnual(inicio, fin);     // Distribución por Estado
+        cargarGraficaCategoriasApilada(inicio, fin); // Categorías y subcategorías apiladas
+    }
+
 </script>
 

@@ -45,19 +45,18 @@ body {
 }
 
 .card-area {
-    position: relative;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.85);
     border-radius: 15px;
     border: 1px solid rgba(255, 255, 255, 0.25);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
     transition: all 0.35s ease;
-    padding: 10px;
 }
 
 .card-area:hover {
     transform: translateY(-8px) scale(1.03);
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.95);
     border-color: rgba(255, 255, 255, 0.45);
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
 }
@@ -252,3 +251,25 @@ body {
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
     transition: all 0.35s ease;
 }
+
+/* Altura completa fija y ancho del menú lateral */
+.sidebar-v {
+    width: 260px;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+}
+
+    /* Efectos visuales de hover para los enlaces */
+    .sidebar-v .nav-link:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: #fff !important;
+    }
+
+/* Forzar que el texto no rompa el diseño del contenedor */
+.text-truncate {
+    max-width: 140px;
+}
+

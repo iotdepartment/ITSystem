@@ -15,86 +15,113 @@
 </head>
 <body class="body-gradient">
     <header>
-        <nav class="navbar navbar-expand-lg navbar-light shadow-lg bg-secondary px-3">
-            <a class="navbar-brand ms-5" href="/Tickets/Index">
-                <img src="~/Images/Logo.png" alt="Logo" style="height:70px">
+        @{
+            var session = HttpContextAccessor.HttpContext?.Session;
+            var nombreUsuario = session?.GetString("UsuarioNombre");
+            var rolUsuario = session?.GetString("UsuarioRol");
+            var numEmpleado = session?.GetInt32("UsuarioEmpleado") ?? 0;
+
+            var fotoUsuario = numEmpleado > 0 ? $"/Images/{numEmpleado}.jpg" : "/Images/default.png";
+            var esAdminOTecnico = rolUsuario == "Admin" || rolUsuario == "Tecnico";
+
+            // Obtener el nombre del controlador actual
+            var controladorActual = ViewContext.RouteData.Values["Controller"]?.ToString();
+        }
+
+        <!-- Contenedor de la Barra Lateral -->
+        <div class="d-flex flex-column flex-shrink-0 p-3 text-white bg-dark shadow-lg sidebar-v">
+
+            <!-- Logo y Título del Sistema -->
+            <a href="/Tickets/Index" class="d-flex align-items-center mb-4 mb-md-0 me-md-auto text-white text-decoration-none gap-2 px-2">
+                <img src="~/Images/Logo.png" alt="Logo" style="height: 40px;" />
+                <span class="fs-6 fw-bold text-nowrap">TGRMX IT Tickets</span>
             </a>
-            <a class="navbar-brand ms-5 fw-bold text-light" href="/Tickets/Index">TGRMX IT Tickets System</a>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            <hr class="border-secondary my-3">
 
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto ms-5 mb-2 mb-lg-0">
-                    <li class="nav-item ms-5"><a class="nav-link text-light" href="/Tickets/Index">Nuevo Ticket</a></li>
-    
-                    @{
-                        // Obtenemos el rol de la sesión para usarlo en esta sección
-                        var rolMenu = HttpContextAccessor.HttpContext?.Session.GetString("UsuarioRol");
-                    }
+            <!-- Enlaces de Navegación -->
+            <ul class="nav nav-pills flex-column mb-auto gap-1">
+                <li class="nav-item">
+                    <a href="/Tickets/Index"
+                       class="nav-link d-flex align-items-center gap-2 @(controladorActual == "Tickets" ? "active text-white" : "text-white-50")">
+                        <i class="bi bi-plus-circle"></i> Nuevo Ticket
+                    </a>
+                </li>
 
-                    <!-- Estos botones solo se renderizan si el rol es Admin o Tecnico -->
-                    @if (rolMenu == "Admin" || rolMenu == "Tecnico")
-                    {
-                        <li class="nav-item ms-5"><a class="nav-link text-light" href="/GestionarTickets/Index">Gestionar Tickets</a></li>
-                        <li class="nav-item ms-5"><a class="nav-link text-light" href="/Areas/Index">Areas</a></li>
-                        <li class="nav-item ms-5"><a class="nav-link text-light" href="/Usuarios/Index">Usuarios</a></li>
-                        <li class="nav-item ms-5"><a class="nav-link text-light" href="/Categorias/Index">Categorias</a></li>
-                        <li class="nav-item ms-5"><a class="nav-link text-light" href="/Dashboard/Index">Dashboard</a></li>
-                    }
-                    <li class="nav-item ms-5"><a class="nav-link text-light" href="#">Help</a></li>
-                </ul>
+                @if (esAdminOTecnico)
+                {
+                    <li>
+                        <a href="/GestionarTickets/Index"
+                           class="nav-link d-flex align-items-center gap-2 @(controladorActual == "GestionarTickets" ? "active text-white" : "text-white-50")">
+                            <i class="bi bi-ticket-perforated"></i> Gestionar Tickets
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/Areas/Index"
+                           class="nav-link d-flex align-items-center gap-2 @(controladorActual == "Areas" ? "active text-white" : "text-white-50")">
+                            <i class="bi bi-diagram-3"></i> Áreas
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/Usuarios/Index"
+                           class="nav-link d-flex align-items-center gap-2 @(controladorActual == "Usuarios" ? "active text-white" : "text-white-50")">
+                            <i class="bi bi-people"></i> Usuarios
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/Categorias/Index"
+                           class="nav-link d-flex align-items-center gap-2 @(controladorActual == "Categorias" ? "active text-white" : "text-white-50")">
+                            <i class="bi bi-tags"></i> Categorías
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/Dashboard/Index"
+                           class="nav-link d-flex align-items-center gap-2 @(controladorActual == "Dashboard" ? "active text-white" : "text-white-50")">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                }
+                <li>
+                    <a href="#" class="nav-link text-white-50 d-flex align-items-center gap-2">
+                        <i class="bi bi-question-circle"></i> Ayuda
+                    </a>
+                </li>
+            </ul>
 
-                <!-- Sección del Usuario Activo -->
-                <ul class="navbar-nav ms-auto me-5">
-                    @{
-                        var nombreUsuario = HttpContextAccessor.HttpContext?.Session.GetString("UsuarioNombre");
-                        var rolUsuario = HttpContextAccessor.HttpContext?.Session.GetString("UsuarioRol");
-                        var numEmpleado = HttpContextAccessor.HttpContext?.Session.GetInt32("UsuarioEmpleado") ?? 0;
+            <hr class="border-secondary my-3">
 
-                        // Si hay número de empleado, armamos la ruta directa: /images/Numero.jpg
-                        // Si no, asignamos la imagen por defecto
-                        var fotoUsuario = numEmpleado > 0
-                        ? $"/Images/{numEmpleado}.jpg"
-                        : "/Images/default.png";
-                    }
-                    @if (!string.IsNullOrEmpty(nombreUsuario))
-                    {
-                        <li class="nav-item dropdown">
-                            <button class="nav-link dropdown-toggle text-white fw-bold bg-dark rounded-pill px-3 border-0 d-flex align-items-center" id="userDropdown" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-
-                                <!-- Busqueda directa en /images/ mediante el Número de Empleado -->
-                                <img src="@fotoUsuario" alt="Perfil" class="rounded-circle me-2" style="width: 28px; height: 28px; object-fit: cover; border: 1px solid rgba(255,255,255,0.5);" />
-
-                                <span>@nombreUsuario</span>
-                                <span class="badge bg-secondary text-wrap small ms-2">@rolUsuario</span>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
-                                <li>
-                                    <a class="dropdown-item text-danger layout-logout" href="/Login/Logout">
-                                        <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
-                                    </a>
-                                </li>
-                            </ul>
+            <!-- Sección del Usuario (Fondo del menú) -->
+            <div class="dropdown">
+                @if (!string.IsNullOrEmpty(nombreUsuario))
+                {
+                    <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle bg-secondary bg-opacity-25 p-2 rounded gap-2"
+                       id="userDropdownSide" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="@fotoUsuario" alt="Perfil" class="rounded-circle border border-white" style="width: 32px; height: 32px; object-fit: cover;" />
+                        <div class="d-flex flex-column min-w-0 flex-grow-1">
+                            <span class="fw-bold text-truncate small">@nombreUsuario</span>
+                            <span class="badge bg-secondary font-monospace alignment-badge align-self-start" style="font-size: 0.65rem;">@rolUsuario</span>
+                        </div>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark shadow border-0 w-100" aria-labelledby="userDropdownSide">
+                        <li>
+                            <a class="dropdown-item text-danger d-flex align-items-center gap-2 layout-logout" href="/Login/Logout">
+                                <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                            </a>
                         </li>
-                    }
-                    else
-                    {
-                        <li class="nav-item">
-                            <a class="nav-link text-light fw-bold" href="/Login/Index">Iniciar Sesión</a>
-                        </li>
-                    }
-                </ul>
-
-
-
+                    </ul>
+                }
+                else
+                {
+                    <a class="btn btn-outline-light w-100 rounded" href="/Login/Index">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
+                    </a>
+                }
             </div>
-        </nav>
+        </div>
     </header>
 
-    <div class="container-fluid p-5">
-        <main role="main" class="pb-0">
+    <div class="d-flex">
+        <main class="flex-grow-1 p-4" style="margin-left: 260px;">
             @RenderBody()
         </main>
     </div>

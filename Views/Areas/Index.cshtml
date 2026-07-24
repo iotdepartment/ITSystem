@@ -2,10 +2,10 @@
     
 
 <div class="container-fluid mt-1">
-   <div class="card mb-4 p-3 border style-glass">
+   <div class="card mb-4 p-3 Charts-style-glass">
         <h2 class="m-0 text-start fw-bold">Gestión de Areas</h2>
    </div>
-   <div class="card mb-4 p-3 border style-glass">
+   <div class="card mb-4 p-3 style-glass">
         <div class="row mb-4 align-items-center">
             <div class="col-auto">
                 <button class="btn btn-success rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#CreateAreaModal">
@@ -16,7 +16,7 @@
                 <input type="text" id="searchInput" class="form-control rounded-pill" placeholder="Buscar area...">
             </div>
         </div>
-
+    
         <div class="row">
             @foreach (var area in Model)
             {
@@ -45,7 +45,7 @@
                 </div>
             }
         </div>
-   </div>
+    </div>
 </div>
 
 <!-- Modal Crear Área -->
