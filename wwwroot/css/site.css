@@ -273,3 +273,18 @@ body {
     max-width: 140px;
 }
 
+
+/* Regla nativa que se activa AUTOMÁTICAMENTE cuando el elemento entra en fullscreen */
+#dashboardPrincipal:fullscreen {
+    background-color: #f4f6f9 !important; /* Fondo limpio para que resalten las tarjetas */
+    padding: 30px !important;
+    overflow-y: auto !important; /* Habilita scroll si las gráficas son más largas que la pantalla */
+    width: 100vw !important;
+    height: 100vh !important;
+}
+
+/* Ocultamos bordes o sombras innecesarias del Layout base en modo Fullscreen */
+#dashboardPrincipal:fullscreen .Charts-style-glass {
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+}
+

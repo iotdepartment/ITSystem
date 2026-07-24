@@ -1,9 +1,14 @@
-﻿<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+﻿
 
-<!-- SECCIÓN DE GRÁFICAS DEL DASHBOARD -->
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
 <div class="container-fluid">
-    <div class="card mb-4 p-3 border Charts-style-glass">
-        <h2 class="m-0 text-start fw-bold">Graficas de Rendimiento</h2>
+    <div class="card mb-4 p-3 border Charts-style-glass d-flex flex-row align-items-center justify-content-between">
+        <h2 class="m-0 text-start fw-bold">Graficas de Rendimiento de Personal</h2>
+        <button type="button" id="btnFullscreenDashboard" class="btn btn-dark rounded-pill px-3 shadow-sm">
+            <i class="fas fa-expand me-1"></i> <span>Pantalla Completa</span>
+        </button>
     </div>
 
     <!-- FILTRO DE FECHAS GLOBAL PARA EL DASHBOARD (AHORA FLOTANTE STICKY) -->
@@ -38,26 +43,9 @@
     </div>
 
 
-    <div class="row mb-4">
-        <div class="col-9">
-            <div class="card Charts-style-glass h-100">
-                <div class="card-header py-3 d-flex align-items-center justify-content-between">
-                    <h5 class="card-title mb-0 fw-bold text-dark">
-                        <i class="fas fa-chart-bar me-2 text-primary"></i>Rendimiento Anual: Creados vs Cerrados
-                    </h5>
-                    <span class="badge bg-light text-dark fw-semibold px-3 py-2 rounded-pill border">
-                        Año <span id="lblAnioActual"></span>
-                    </span>
-                </div>
-                <div class="card-body p-4">
-                    <div style="position: relative; height: 320px; width: 100%;">
-                        <canvas id="chartTicketsAnual"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="row g-4 mb-4 align-items-stretch">
         <!-- Gráfica de Cumplimiento (Derecha) -->
-        <div class="col-3">
+        <div class="col col-md-4">
             <div class="card Charts-style-glass h-100">
                 <div class="card-header py-3">
                     <h5 class="card-title mb-0 fw-bold text-dark">
@@ -70,16 +58,13 @@
                     </div>
                     <!-- Texto central con el porcentaje grande -->
                     <div class="text-center mt-3">
-                        <h3 class="fw-bold text-dark mb-0" id="txtPorcentajeGranTotal">0%</h3>
-                        <small class="text-muted">Tickets Resueltos con éxito</small>
+                        <h3 class="fw-bolder text-dark mb-0" id="txtPorcentajeGranTotal">0%</h3>
+                        <small class="text-dark">Tickets Resueltos con éxito</small>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-
-    <div class="row g-4 mb-4">
-        <div class="col-12">
+        <div class="col-md-8">
             <div class="card Charts-style-glass h-100">
                 <div class="card-header py-3 d-flex align-items-center justify-content-between">
                     <h5 class="card-title mb-0 fw-bold text-dark">
@@ -95,8 +80,8 @@
         </div>
     </div>
 
-    <div class="row g-4 mb-4">
-        <div class="col-9">
+    <div class="row g-4 mb-4 align-items-stretch">
+        <div class="col-md-8">
             <div class="card Charts-style-glass h-100">
                 <div class="card-header py-3 d-flex align-items-center justify-content-between">
                     <h5 class="card-title mb-0 fw-bold text-dark">
@@ -112,7 +97,7 @@
         </div>
 
         <!-- GRÁFICA DE EFECTIVIDAD DE RESOLUCIÓN -->
-        <div class="col-3">
+        <div class="col-md-4">
             <div class="card Charts-style-glass h-100">
                 <div class="card-header py-3">
                     <h5 class="card-title mb-0 fw-bold text-dark">
@@ -131,136 +116,11 @@
             </div>
         </div>
     </div>
-
-    <div class="row g-4 mb-4">
-        <div class="col-12">
-            <div class="card Charts-style-glass">
-                <!-- Encabezado Limpio -->
-                <div class="card-header py-3 d-flex align-items-center justify-content-between">
-                    <h5 class="card-title mb-0 fw-bold text-dark">
-                        <i class="fas fa-tasks me-2 text-primary"></i>Distribución de Tickets por Estado Actual
-                    </h5>
-                </div>
-
-                <div class="card-body p-4">
-                    <div style="position: relative; height: 300px; width: 100%;">
-                        <canvas id="chartEstadosTickets"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    
-    <!-- GRÁFICA DE TICKETS RESUELTOS POR CATEGORÍA Y SUBCATEGORÍA -->
-    <div class="row g-4 mb-4">
-        <div class="col-12">
-            <div class="card Charts-style-glass">
-                <div class="card-header py-3">
-                    <h5 class="card-title mb-0 fw-bold text-dark">
-                        <i class="fas fa-tags me-2 text-success"></i>Efectividad por Servicio: Resueltos por Categoría / Subcategoría
-                    </h5>
-                </div>
-                <div class="card-body p-4">
-                    <div style="position: relative; height: 350px; width: 100%;">
-                        <canvas id="chartCategoriasSub"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
 </div>
 
 <!-- Asegúrate de incluir la librería Chart.js si no la tienes en tu Layout -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
-
-<script>
-       // Variable de respaldo global
-    let chartAnualInstancia = null;
-
-    function cargarGraficaTickets(inicio = '', fin = '') {
-        let url = `/Dashboard/ObtenerMetricasAnuales?inicio=${inicio}&fin=${fin}`;
-
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                const canvasElement = document.getElementById('chartTicketsAnual');
-                if (!canvasElement) return;
-
-                const ctx = canvasElement.getContext('2d');
-                const graficoExistenteEnCanvas = Chart.getChart("chartTicketsAnual");
-                if (graficoExistenteEnCanvas) {
-                    graficoExistenteEnCanvas.destroy();
-                }
-
-                // Reiniciamos nuestra variable de control por seguridad
-                if (chartAnualInstancia !== null) {
-                    try { chartAnualInstancia.destroy(); } catch(e) {}
-                    chartAnualInstancia = null;
-                }
-
-                const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-
-                // Creamos la instancia limpiamente sobre el lienzo garantizado desocupado
-                chartAnualInstancia = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: meses,
-                        datasets: [
-                            {
-                                label: 'Tickets Generados',
-                                data: data.creados,
-                                backgroundColor: 'rgba(13, 110, 253, 0.75)',
-                                borderColor: 'rgb(13, 110, 253)',
-                                borderWidth: 1,
-                                borderRadius: 6,
-                                barPercentage: 0.8,
-                                categoryPercentage: 0.7
-                            },
-                            {
-                                label: 'Tickets Cerrados',
-                                data: data.cerrados,
-                                backgroundColor: 'rgba(25, 135, 84, 0.75)',
-                                borderColor: 'rgb(25, 135, 84)',
-                                borderWidth: 1,
-                                borderRadius: 6,
-                                barPercentage: 0.8,
-                                categoryPercentage: 0.7
-                            }
-                        ]
-                    },
-                    plugins: [ChartDataLabels],
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'top',
-                                labels: { usePointStyle: true, boxWidth: 10, font: { weight: 'bold', family: 'system-ui' } }
-                            },
-                            tooltip: { mode: 'index', intersect: false, padding: 12 },
-                            datalabels: {
-                                anchor: 'end',
-                                align: 'top',
-                                offset: 2,
-                                font: { weight: 'bold', size: 11, family: 'system-ui' },
-                                formatter: value => value > 0 ? value : '',
-                                color: context => context.dataset.borderColor
-                            }
-                        },
-                        scales: {
-                            x: { grid: { display: false } },
-                            y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, grace: '10%' }
-                        }
-                    }
-                });
-            })
-            .catch(error => console.error('Error al cargar la gráfica del dashboard:', error));
-    }
-
-</script>
 
 <script>
     // Variable global que mantendrá viva la estructura base de la gráfica en la memoria del navegador
@@ -276,17 +136,22 @@
                 return response.json();
             })
             .then(data => {
-                // 1. Actualizar el texto numérico grande debajo de la dona
+                // 1. **MÁS GRANDE Y NEGRITAS**: Actualizar el porcentaje central inferior usando clases de impacto de Bootstrap
                 const txtPorcentaje = document.getElementById('txtPorcentajeGranTotal');
-                if (txtPorcentaje) txtPorcentaje.textContent = `${data.porcentajeCumplimiento}%`;
+                if (txtPorcentaje) {
+                    txtPorcentaje.textContent = `${data.porcentajeCumplimiento}%`;
+                    // Forzamos clases de tipografía grande y robusta
+                    txtPorcentaje.className = "display-5 fw-extrabold text-dark mb-0";
+                }
 
                 const ctx = document.getElementById('chartCumplimiento').getContext('2d');
                 if (!ctx) return;
+
                 if (chartCumplimientoInstancia !== null) {
                     // Reemplazamos los valores viejos por los nuevos datos filtrados
                     chartCumplimientoInstancia.data.datasets[0].data = [data.resueltos, data.pendientes];
 
-                    // Actualizamos la tooltip para que use el nuevo 'data.total' recalculado
+                    // **NEGRITAS**: Actualizamos la tooltip interactiva fluida
                     chartCumplimientoInstancia.options.plugins.tooltip.callbacks.label = function(context) {
                         const valor = context.raw;
                         const total = data.total;
@@ -299,8 +164,10 @@
                         easing: 'easeOutQuart'
                     });
 
-                    return; 
+                    return;
                 }
+
+                // CARGA INICIAL
                 chartCumplimientoInstancia = new Chart(ctx, {
                     type: 'doughnut',
                     data: {
@@ -308,37 +175,45 @@
                         datasets: [{
                             data: [data.resueltos, data.pendientes],
                             backgroundColor: [
-                                'rgba(25, 135, 84, 0.85)',  
-                                'rgba(220, 53, 69, 0.15)'   
+                                'rgba(25, 135, 84, 0.85)',
+                                'rgba(220, 53, 69, 0.15)'
                             ],
                             borderColor: [
                                 'rgb(25, 135, 84)',
                                 'rgba(220, 53, 69, 0.4)'
                             ],
                             borderWidth: 1,
-                            cutout: '75%'
+                            cutout: '70%' 
                         }]
                     },
                     plugins: [ChartDataLabels],
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        // Configuración de la animación inicial de entrada
                         animation: {
                             duration: 1000,
                             animateRotate: true,
                             animateScale: false
                         },
                         plugins: {
+                            // **NEGRITAS**: Estilo de las leyendas inferiores
                             legend: {
                                 position: 'bottom',
                                 labels: {
                                     usePointStyle: true,
-                                    boxWidth: 8,
-                                    font: { family: 'system-ui', size: 12 }
+                                    boxWidth: 9,
+                                    font: {
+                                        family: 'system-ui',
+                                        size: 13,
+                                        weight: 'bold' // Pone las leyendas en negritas
+                                    }
                                 }
                             },
+                            // **NEGRITAS**: Estilo de los textos emergentes (Tooltips)
                             tooltip: {
+                                padding: 12,
+                                titleFont: { family: 'system-ui', weight: 'bold', size: 13 },
+                                bodyFont: { family: 'system-ui', weight: 'bold', size: 13 },
                                 callbacks: {
                                     label: function(context) {
                                         const valor = context.raw;
@@ -348,12 +223,13 @@
                                     }
                                 }
                             },
+                            // **MÁS GRANDES Y NEGRITAS**: Configuración de los números flotantes sobre la dona
                             datalabels: {
                                 anchor: 'center',
                                 align: 'center',
                                 font: {
-                                    weight: 'bold',
-                                    size: 13,
+                                    weight: 'bold', // Fuerza negritas en las cantidades
+                                    size: 16,        // Escalado de tamaño a 16px para máxima legibilidad
                                     family: 'system-ui'
                                 },
                                 formatter: function(value) {
@@ -416,11 +292,11 @@
                 chartTecnicosInstancia = new Chart(ctx, {
                     type: 'bar',
                     data: {
-                        labels: data.tecnicos, 
+                        labels: data.tecnicos,
                         datasets: [
                             {
                                 label: 'Tickets Asignados (Activos)',
-                                data: data.activos, 
+                                data: data.activos,
                                 backgroundColor: 'rgba(0, 191, 165, 0.75)',
                                 borderColor: 'rgb(0, 150, 136)',
                                 borderWidth: 1,
@@ -430,7 +306,7 @@
                             },
                             {
                                 label: 'Tickets Cerrados (Histórico)',
-                                data: data.cerrados, 
+                                data: data.cerrados,
                                 backgroundColor: 'rgba(25, 135, 84, 0.75)',
                                 borderColor: 'rgb(25, 135, 84)',
                                 borderWidth: 1,
@@ -442,33 +318,39 @@
                     },
                     plugins: [ChartDataLabels],
                     options: {
-                        indexAxis: 'y', 
+                        indexAxis: 'y',
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
+                            // **NEGRITAS**: Estilo robusto para la leyenda superior
                             legend: {
                                 position: 'top',
                                 labels: {
                                     usePointStyle: true,
                                     boxWidth: 10,
-                                    font: { family: 'system-ui', weight: 'bold' }
+                                    font: { family: 'system-ui', weight: 'bold', size: 12 }
                                 }
                             },
+                            // **NEGRITAS**: Cuadro emergente con tipografía sólida
                             tooltip: {
                                 mode: 'index',
-                                intersect: false
+                                intersect: false,
+                                padding: 12,
+                                titleFont: { family: 'system-ui', weight: 'bold', size: 13 },
+                                bodyFont: { family: 'system-ui', weight: 'bold', size: 13 }
                             },
+                            // **MÁS GRANDES Y NEGRITAS**: Cantidades fijas flotantes al final de cada barra
                             datalabels: {
                                 anchor: 'end',
                                 align: 'right',
-                                offset: 4,
+                                offset: 5, // Separación sutil del borde de la barra
                                 font: {
-                                    weight: 'bold',
-                                    size: 11,
+                                    weight: 'bold', // Fuerza negritas en el número
+                                    size: 14,       // Incrementado a 14px para lectura inmediata
                                     family: 'system-ui'
                                 },
                                 formatter: function(value) {
-                                    return value > 0 ? value : ''; 
+                                    return value > 0 ? value : '';
                                 },
                                 color: function(context) {
                                     return context.dataset.borderColor;
@@ -480,17 +362,21 @@
                                 beginAtZero: true,
                                 ticks: {
                                     stepSize: 1,
-                                    precision: 0
+                                    precision: 0,
+                                    font: { family: 'system-ui', weight: 'bold', size: 12 } // **NEGRITAS** en números del eje X
                                 },
                                 title: {
                                     display: true,
                                     text: 'Cantidad de Tickets',
-                                    font: { weight: 'bold' }
+                                    font: { weight: 'bold', family: 'system-ui', size: 13 } // **NEGRITAS** en título del eje X
                                 },
-                                grace: '8%'
+                                grace: '12%' // Aumentado a 12% para dar un colchón extra a los números grandes (tamaño 14) y evitar que se corten
                             },
                             y: {
-                                grid: { display: false }
+                                grid: { display: false },
+                                ticks: {
+                                    font: { family: 'system-ui', weight: 'bold', size: 12 } // **NEGRITAS** en nombres de técnicos (Eje Y)
+                                }
                             }
                         }
                     }
@@ -501,18 +387,12 @@
 </script>
 
 
+
 <script>
     // Variable global para mantener viva la estructura de la gráfica en memoria RAM
     let chartTiemposInstancia = null;
 
-    document.addEventListener("DOMContentLoaded", function () {
-        // Carga inicial automática sin parámetros al abrir la página
-        cargarGraficaTiempos();
-    });
-
-    
     function cargarGraficaTiempos(inicio = '', fin = '') {
-       
         let url = '/Dashboard/ObtenerTiemposPromedio';
         if (inicio.trim() !== '' && fin.trim() !== '') {
             url += `?inicio=${inicio}&fin=${fin}`;
@@ -528,17 +408,16 @@
                 if (!ctx) return;
 
                 if (chartTiemposInstancia !== null) {
-                    chartTiemposInstancia.data.datasets[0].data = data.atencion; 
-                    chartTiemposInstancia.data.datasets[1].data = data.solucion; 
+                    chartTiemposInstancia.data.datasets[0].data = data.atencion;
+                    chartTiemposInstancia.data.datasets[1].data = data.solucion;
 
                     chartTiemposInstancia.update({
                         duration: 800,
-                        easing: 'easeOutQuart' 
+                        easing: 'easeOutQuart'
                     });
-                    return; 
+                    return;
                 }
 
-                // BLINDAJE DE HARDWARE: Desalojo preventivo en el mapa de renderizado de Chart.js
                 const graficoExistenteEnCanvas = Chart.getChart("chartTiemposRespuesta");
                 if (graficoExistenteEnCanvas) {
                     graficoExistenteEnCanvas.destroy();
@@ -546,31 +425,30 @@
 
                 const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-                // CARGA INICIAL: Primera vez que se dibuja en la pantalla
                 chartTiemposInstancia = new Chart(ctx, {
                     type: 'line',
                     data: {
                         labels: meses,
                         datasets: [
                             {
-                                label: 'Tiempo de Primera Atención (Horas)',
+                                label: 'Tiempo de Primera Atención (Minutos)',
                                 data: data.atencion,
                                 borderColor: 'rgb(255, 193, 7)',
                                 backgroundColor: 'rgba(255, 193, 7, 0.1)',
                                 borderWidth: 3,
                                 tension: 0.3,
                                 fill: true,
-                                yAxisID: 'yHoras'
+                                yAxisID: 'yAtencion'
                             },
                             {
-                                label: 'Tiempo de Cierre/Solución (Días)',
+                                label: 'Tiempo de Cierre/Solución (Minutos)',
                                 data: data.solucion,
                                 borderColor: 'rgb(13, 202, 240)',
                                 backgroundColor: 'rgba(13, 202, 240, 0.1)',
                                 borderWidth: 3,
                                 tension: 0.3,
                                 fill: true,
-                                yAxisID: 'yDias'
+                                yAxisID: 'ySolucion'
                             }
                         ]
                     },
@@ -578,175 +456,77 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        animation: {
-                            duration: 1000 // Animación de entrada inicial
-                        },
+                        animation: { duration: 1000 },
                         plugins: {
-                            legend: { position: 'top' },
-                            tooltip: { mode: 'index', intersect: false },
+                            legend: {
+                                position: 'top',
+                                labels: { usePointStyle: true, font: { family: 'system-ui', weight: 'bold', size: 13 } }
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                padding: 12,
+                                titleFont: { family: 'system-ui', weight: 'bold', size: 13 },
+                                bodyFont: { family: 'system-ui', weight: 'bold', size: 13 },
+                                callbacks: {
+                                    label: function(context) {
+                                        return ` ${context.dataset.label.split(' (')[0]}: ${context.raw} min`;
+                                    }
+                                }
+                            },
                             datalabels: {
                                 anchor: 'end',
                                 align: 'top',
-                                offset: 4,
+                                offset: 5,
                                 font: {
                                     weight: 'bold',
-                                    size: 10,
+                                    size: 14,
                                     family: 'system-ui'
                                 },
-                                formatter: function(value, context) {
-                                    if (value === 0) return ''; // Esconde ceros para no amontonar las líneas
-
-                                    // Agrega sufijo interactivo (hrs para dataset 0, d para dataset 1)
-                                    return context.datasetIndex === 0 ? value + ' hrs' : value + ' d';
+                                formatter: function(value) {
+                                    if (value === 0) return '';
+                                    return value + ' min';
                                 },
-                                color: function(context) {
-                                    return context.dataset.borderColor;
-                                }
+                                // **CAMBIADO**: Se fuerza el color negro sólido (#000000) sobre los puntos de las líneas
+                                color: '#000000'
                             }
                         },
                         scales: {
-                            yHoras: {
+                            yAtencion: {
                                 type: 'linear',
                                 position: 'left',
-                                title: { display: true, text: 'Horas (Atención)' },
+                                title: {
+                                    display: true,
+                                    text: 'Minutos (Atención)',
+                                    font: { weight: 'bold', family: 'system-ui', size: 13 }
+                                },
                                 beginAtZero: true,
                                 grid: { drawOnChartArea: true },
-                                grace: '12%' // Colchón arriba para evitar que los números hrs se corten
+                                ticks: { font: { family: 'system-ui', weight: 'bold', size: 12 } },
+                                grace: '18%'
                             },
-                            yDias: {
+                            ySolucion: {
                                 type: 'linear',
                                 position: 'right',
-                                title: { display: true, text: 'Días (Solución)' },
+                                title: {
+                                    display: true,
+                                    text: 'Minutos (Solución)',
+                                    font: { weight: 'bold', family: 'system-ui', size: 13 }
+                                },
                                 beginAtZero: true,
                                 grid: { drawOnChartArea: false },
-                                grace: '12%' // Colchón arriba en el eje derecho para los números d
+                                ticks: { font: { family: 'system-ui', weight: 'bold', size: 12 } },
+                                grace: '18%'
                             },
-                            x: { grid: { display: false } }
+                            x: {
+                                grid: { display: false },
+                                ticks: { font: { family: 'system-ui', weight: 'bold', size: 13 } }
+                            }
                         }
                     }
                 });
             })
-            .catch(error => console.error('Error al cargar gráfica de tiempos:', error));
-    }
-</script>
-
-
-
-<script>
-    // Variable global para controlar la instancia del gráfico en la memoria del navegador
-    let miGraficoEstados = null;
-
-    document.addEventListener("DOMContentLoaded", function () {
-        // Carga inicial por defecto al abrir el Dashboard (usa el rango anual automático)
-        cargarGraficaEstadosAnual();
-    });
-
-    // Modificado: Ahora recibe los parámetros opcionales del filtro por fechas global
-    function cargarGraficaEstadosAnual(inicio = '', fin = '') {
-        // Construimos la URL dinámica agregando las variables de filtrado
-        let url = '/Dashboard/ObtenerVolumenPorEstado';
-        if (inicio.trim() !== '' && fin.trim() !== '') {
-            url += `?inicio=${inicio}&fin=${fin}`;
-        }
-
-        fetch(url)
-            .then(response => {
-                if (!response.ok) throw new Error("Error al obtener volumen de estados");
-                return response.json();
-            })
-            .then(data => {
-                // =========================================================================
-                // MODO FLUIDO: Si la gráfica YA EXISTE, mutamos sus valores internos.
-                // Esto hace que las barras suban y bajen de forma elástica y sin parpadeos.
-                // =========================================================================
-                if (miGraficoEstados !== null) {
-                    miGraficoEstados.data.datasets[0].data = data.totales;
-                    miGraficoEstados.update({
-                        duration: 800,
-                        easing: 'easeOutQuart' // Curva de transición estilizada
-                    });
-                    return; // Detiene el flujo para evitar el error "Canvas is already in use"
-                }
-
-                // Si no existe la instancia física en la variable pero el Canvas está ocupado internamente, lo liberamos
-                const graficoExistenteEnCanvas = Chart.getChart("chartEstadosTickets");
-                if (graficoExistenteEnCanvas) {
-                    graficoExistenteEnCanvas.destroy();
-                }
-
-                // Ejecuta el constructor inicial la primera vez que abre la página
-                renderizarGraficaEstadosCanvas(data.estados, data.totales);
-            })
-            .catch(error => console.error('Error al cargar gráfica de estados:', error));
-    }
-
-    function renderizarGraficaEstadosCanvas(labels, valores) {
-        const ctx = document.getElementById('chartEstadosTickets').getContext('2d');
-        if (!ctx) return;
-
-        const coloresFondo = [
-            'rgba(220, 53, 69, 0.75)',  // Rojo - Por Atender
-            'rgba(255, 193, 7, 0.75)',  // Amarillo - En Proceso
-            'rgba(13, 202, 240, 0.75)', // Celeste - En Espera
-            'rgba(25, 135, 84, 0.75)'   // Verde - Resuelto
-        ];
-
-        const coloresBorde = [
-            'rgb(220, 53, 69)',
-            'rgb(255, 193, 7)',
-            'rgb(13, 202, 240)',
-            'rgb(25, 135, 84)'
-        ];
-
-        miGraficoEstados = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: valores,
-                    backgroundColor: coloresFondo,
-                    borderColor: coloresBorde,
-                    borderWidth: 1,
-                    borderRadius: 6,
-                    barPercentage: 0.5
-                }]
-            },
-            plugins: [ChartDataLabels],
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: {
-                    duration: 1000 // Animación de entrada inicial
-                },
-                plugins: {
-                    legend: { display: false },
-                    datalabels: {
-                        anchor: 'end',
-                        align: 'top',
-                        offset: 2,
-                        font: {
-                            weight: 'bold',
-                            size: 11,
-                            family: 'system-ui'
-                        },
-                        formatter: function(value) {
-                            return value > 0 ? value : '';
-                        },
-                        color: function(context) {
-                            return coloresBorde[context.dataIndex];
-                        }
-                    }
-                },
-                scales: {
-                    x: { grid: { display: false } },
-                    y: {
-                        beginAtZero: true,
-                        ticks: { stepSize: 1, precision: 0 },
-                        grace: '10%'
-                    }
-                }
-            }
-        });
+            .catch(error => console.error('Error al cargar gráfica de tiempos en minutos:', error));
     }
 </script>
 
@@ -772,18 +552,21 @@
                 return response.json();
             })
             .then(data => {
-                // Actualizar indicador central de FCR (Primera visita) con el nuevo cálculo
+                // 1. **MÁS GRANDE Y NEGRITAS**: Actualizar el porcentaje central inferior con clases robustas
                 const txtFcr = document.getElementById('txtFcrPorcentaje');
-                if (txtFcr) txtFcr.textContent = `${data.fcr}%`;
+                if (txtFcr) {
+                    txtFcr.textContent = `${data.fcr}%`;
+                    txtFcr.className = "display-5 fw-extrabold text-dark mb-0"; // Estilo imponente de Bootstrap
+                }
 
                 const ctx = document.getElementById('chartEfectividadResolucion').getContext('2d');
                 if (!ctx) return;
 
                 if (chartEfectividadInstancia !== null) {
-                    // Inyectamos las nuevas cantidades filtradas
+                    // Reemplazamos los valores viejos por los nuevos datos filtrados
                     chartEfectividadInstancia.data.datasets[0].data = [data.primera, data.segunda, data.extendido];
 
-                    // Actualizamos la tooltip para que use el nuevo 'data.total' recalculado
+                    // **NEGRITAS**: Actualizamos la tooltip interactiva fluida
                     chartEfectividadInstancia.options.plugins.tooltip.callbacks.label = function(context) {
                         const valor = context.raw;
                         const total = data.total;
@@ -797,9 +580,9 @@
                         easing: 'easeOutQuart'
                     });
 
-                    return; 
+                    return;
                 }
- 
+
                 const graficoExistenteEnCanvas = Chart.getChart("chartEfectividadResolucion");
                 if (graficoExistenteEnCanvas) {
                     graficoExistenteEnCanvas.destroy();
@@ -812,9 +595,9 @@
                         datasets: [{
                             data: [data.primera, data.segunda, data.extendido],
                             backgroundColor: [
-                                'rgba(25, 135, 84, 0.85)', 
-                                'rgba(13, 202, 240, 0.85)',  
-                                'rgba(255, 193, 7, 0.85)'    
+                                'rgba(25, 135, 84, 0.85)',
+                                'rgba(13, 202, 240, 0.85)',
+                                'rgba(255, 193, 7, 0.85)'
                             ],
                             borderColor: [
                                 'rgb(25, 135, 84)',
@@ -822,10 +605,9 @@
                                 'rgb(255, 193, 7)'
                             ],
                             borderWidth: 1,
-                            cutout: '75%'
+                            cutout: '70%' // Reducido ligeramente al 70% para ensanchar el arco y contener números grandes
                         }]
                     },
-                    // PASO 1: Inyectamos el plugin para renderizar las cantidades fijas en la dona
                     plugins: [ChartDataLabels],
                     options: {
                         responsive: true,
@@ -835,15 +617,24 @@
                             animateRotate: true
                         },
                         plugins: {
+                            // **NEGRITAS Y MÁS GRANDE**: Estilo de las leyendas inferiores
                             legend: {
                                 position: 'bottom',
                                 labels: {
                                     usePointStyle: true,
-                                    boxWidth: 8,
-                                    font: { family: 'system-ui', size: 11 }
+                                    boxWidth: 9,
+                                    font: {
+                                        family: 'system-ui',
+                                        size: 13,
+                                        weight: 'bold' // Leyendas robustas
+                                    }
                                 }
                             },
+                            // **NEGRITAS**: Estilo de los cuadros emergentes (Tooltips)
                             tooltip: {
+                                padding: 12,
+                                titleFont: { family: 'system-ui', weight: 'bold', size: 13 },
+                                bodyFont: { family: 'system-ui', weight: 'bold', size: 13 },
                                 callbacks: {
                                     label: function(context) {
                                         const valor = context.raw;
@@ -853,19 +644,18 @@
                                     }
                                 }
                             },
-                            // PASO 2: Configuración de diseño para colocar los números fijos centrados en los arcos
+                            // **MÁS GRANDES Y NEGRITAS**: Configuración de las cantidades fijas sobre los arcos
                             datalabels: {
                                 anchor: 'center',    // Centra el número a la mitad del bloque de color
                                 align: 'center',
                                 font: {
-                                    weight: 'bold',
-                                    size: 12,
+                                    weight: 'bold', // Fuerza negritas en las cantidades
+                                    size: 16,        // Escalado de tamaño a 16px para máxima legibilidad
                                     family: 'system-ui'
                                 },
-                                // Oculta la etiqueta si la cantidad es 0 para mantener limpia la UI
-                                formatter: value => value > 0 ? value : '',
+                                formatter: value => value > 0 ? value : '', // Oculta ceros
                                 color: function(context) {
-                                    // Letra blanca para la sección verde o celeste, letra gris oscura para la sección amarilla
+                                    // Letra blanca para secciones oscuras (verde/azul), letra oscura para el bloque amarillo
                                     return context.dataIndex === 2 ? '#333333' : '#ffffff';
                                 }
                             }
@@ -877,127 +667,6 @@
     }
 </script>
 
-
-<script>
-    // Variable global para mantener viva la estructura de la gráfica apilada en memoria
-    let chartCategoriasInstancia = null;
-
-    document.addEventListener("DOMContentLoaded", function () {
-        // Carga inicial por defecto al abrir la página (usa el rango anual automático)
-        cargarGraficaCategoriasApilada();
-    });
-
-    // Modificado: Ahora recibe los parámetros del rango de fechas global
-    function cargarGraficaCategoriasApilada(inicio = '', fin = '') {
-        // Construimos la URL dinámica inyectando las variables de fecha
-        let url = '/Dashboard/ObtenerResueltosPorCategoriaApilada';
-        if (inicio.trim() !== '' && fin.trim() !== '') {
-            url += `?inicio=${inicio}&fin=${fin}`;
-        }
-
-        fetch(url)
-            .then(response => {
-                if (!response.ok) throw new Error("Error al obtener datos apilados");
-                return response.json();
-            })
-            .then(data => {
-                const ctx = document.getElementById('chartCategoriasSub').getContext('2d');
-                if (!ctx) return;
-
-                // Generador dinámico de colores RGBA para que cada subcategoría tenga un color único
-                const paletaColores = [
-                    'rgba(25, 135, 84, 0.8)',   // Verde base
-                    'rgba(13, 110, 253, 0.8)',  // Azul
-                    'rgba(255, 193, 7, 0.8)',   // Amarillo
-                    'rgba(13, 202, 240, 0.8)',  // Celeste
-                    'rgba(111, 66, 193, 0.8)',  // Púrpura
-                    'rgba(253, 126, 20, 0.8)',  // Naranja
-                    'rgba(32, 201, 151, 0.8)'   // Teal
-                ];
-
-                // Inyectamos configuraciones visuales a cada conjunto de datos del backend
-                const datasetsConfigurados = data.datasets.map((dataset, index) => {
-                    const colorSeleccionado = paletaColores[index % paletaColores.length];
-                    return {
-                        label: dataset.label,
-                        data: dataset.data,
-                        backgroundColor: colorSeleccionado,
-                        borderColor: colorSeleccionado.replace('0.8', '1'), // Color sólido para el borde
-                        borderWidth: 1,
-                        barPercentage: 0.6,
-                        categoryPercentage: 0.7
-                    };
-                });
-
-                // =========================================================================
-                // MODO FLUIDO: Si la gráfica YA EXISTE, mutamos sus valores internos.
-                // Re-mapeamos tanto las nuevas etiquetas del Eje X como los bloques apilados.
-                // =========================================================================
-                if (chartCategoriasInstancia !== null) {
-                    chartCategoriasInstancia.data.labels = data.categorias;
-                    chartCategoriasInstancia.data.datasets = datasetsConfigurados;
-
-                    chartCategoriasInstancia.update({
-                        duration: 800,
-                        easing: 'easeOutQuart' // Curva elástica estilizada
-                    });
-                    return; // Detiene el flujo para evitar conflictos con el lienzo
-                }
-
-                // BLINDAJE DE HARDWARE: Nos aseguramos de desalojar cualquier render previo en el canvas
-                const graficoExistenteEnCanvas = Chart.getChart("chartCategoriasSub");
-                if (graficoExistenteEnCanvas) {
-                    graficoExistenteEnCanvas.destroy();
-                }
-
-                // =========================================================================
-                // CARGA INICIAL: Primera vez que se dibuja en la pantalla
-                // =========================================================================
-                chartCategoriasInstancia = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: data.categorias, // Categorías principales en el Eje X
-                        datasets: datasetsConfigurados // Subcategorías apiladas
-                    },
-                    plugins: [ChartDataLabels],
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        animation: {
-                            duration: 1000 // Animación suave al cargar la vista
-                        },
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: { usePointStyle: true, font: { family: 'system-ui', size: 11 } }
-                            },
-                            tooltip: { mode: 'index', intersect: false },
-                            datalabels: {
-                                anchor: 'center', // Centra las cantidades fijas dentro de cada bloque apilado
-                                align: 'center',
-                                font: { weight: 'bold', size: 10, family: 'system-ui' },
-                                color: '#ffffff', // Letras blancas para excelente contraste
-                                formatter: value => value > 0 ? value : '' // Esconde ceros innecesarios
-                            }
-                        },
-                        scales: {
-                            x: {
-                                stacked: true,
-                                grid: { display: false }
-                            },
-                            y: {
-                                stacked: true,
-                                beginAtZero: true,
-                                ticks: { stepSize: 1, precision: 0 },
-                                grace: '10%'
-                            }
-                        }
-                    }
-                });
-            })
-            .catch(error => console.error('Error al cargar gráfica apilada:', error));
-    }
-</script>
 
 <script>
         document.addEventListener("DOMContentLoaded", function () {
@@ -1040,14 +709,63 @@
         }
 
         // Pasamos los parámetros de manera unificada a todas tus funciones existentes
-        cargarGraficaTickets(inicio, fin);          // Creados vs Cerrados
         cargarGraficaCumplimiento(inicio, fin);     // Porcentaje de cumplimiento
         cargarGraficaPorTecnico(inicio, fin);       // Carga por Técnico
         cargarGraficaTiempos(inicio, fin);          // Tiempos promedio de respuesta
-        cargarGraficaEfectividad(inicio, fin); 
-        cargarGraficaEstadosAnual(inicio, fin);     // Distribución por Estado
-        cargarGraficaCategoriasApilada(inicio, fin); // Categorías y subcategorías apiladas
+        cargarGraficaEfectividad(inicio, fin);    // Efectividad
     }
+
+</script>
+
+<script>
+           document.addEventListener("DOMContentLoaded", function () {
+        const btnFullscreen = document.getElementById('btnFullscreenDashboard');
+
+        // SOLUCIÓN DE RAÍZ: Buscamos el contenedor real del Layout base de tu proyecto
+        const contenedorLayout = document.getElementById('dashboardPrincipal');
+
+        if (btnFullscreen && contenedorLayout) {
+            btnFullscreen.addEventListener('click', function () {
+                // 1. Si NO está en pantalla completa, maximizamos el <main> del Layout
+                if (!document.fullscreenElement) {
+                    contenedorLayout.requestFullscreen()
+                        .then(() => {
+                            // Cambiamos el estilo y texto del botón de forma estética
+                            btnFullscreen.innerHTML = '<i class="fas fa-compress me-1"></i> <span>Salir</span>';
+                            btnFullscreen.className = "btn btn-outline-dark rounded-pill px-3 shadow-sm";
+                        })
+                        .catch(err => {
+                            console.error(`Error de hardware al maximizar el Layout: ${err.message}`);
+                        });
+                } else {
+                    // 2. Si YA ESTÁ en pantalla completa, salimos de ella
+                    document.exitFullscreen();
+                }
+            });
+
+            // =========================================================================
+            // ESCUCHADOR DE CAMBIO DE ESTADO (Detecta también si presionan la tecla 'Esc')
+            // =========================================================================
+            document.addEventListener('fullscreenchange', function () {
+                if (!document.fullscreenElement) {
+                    // Restauramos el botón a su diseño original de la vista
+                    btnFullscreen.innerHTML = '<i class="fas fa-expand me-1"></i> <span>Pantalla Completa</span>';
+                    btnFullscreen.className = "btn btn-dark rounded-pill px-3 shadow-sm";
+
+                    // RE-AJUSTE ELÁSTICO: Sincroniza el tamaño de todas tus gráficas al instante
+                    setTimeout(() => {
+                        // Recorremos el registro central de Chart.js para redimensionar tus 7 componentes al unísono
+                        Object.keys(Chart.instances).forEach(function (id) {
+                            if (Chart.instances[id]) {
+                                Chart.instances[id].resize();
+                                Chart.instances[id].render();
+                            }
+                        });
+                    }, 150); // 150ms son perfectos ya que el contenedor raíz nunca perdió sus estilos de Bootstrap
+                }
+            });
+        }
+    });
 
 </script>
 

@@ -1,0 +1,731 @@
+﻿
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<div class="container-fluid">
+    <div class="card mb-4 p-3 border Charts-style-glass d-flex flex-row align-items-center justify-content-between">
+        <h2 class="m-0 text-start fw-bold">Graficas de Soporte de Planta</h2>
+        <button type="button" id="btnFullscreenDashboard" class="btn btn-dark rounded-pill px-3 shadow-sm">
+            <i class="fas fa-expand me-1"></i> <span>Pantalla Completa</span>
+        </button>
+    </div>
+
+    <div class="row mb-4" style="position: sticky; top: 0; z-index: 1020;">
+        <div class="col-12">
+            <div class="card Charts-style-glass shadow border-0">
+                <div class="card-body p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-calendar-alt text-primary fs-5"></i>
+                        <h6 class="mb-0 fw-bold text-dark">Filtrar Todo el Dashboard por Rango de Fechas:</h6>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <div class="input-group input-group-sm" style="width: 200px;">
+                            <span class="input-group-text bg-light text-muted">Desde</span>
+                            <input type="date" id="globalFechaInicio" class="form-control">
+                        </div>
+                        <div class="input-group input-group-sm" style="width: 200px;">
+                            <span class="input-group-text bg-light text-muted">Hasta</span>
+                            <input type="date" id="globalFechaFin" class="form-control">
+                        </div>
+                        <button type="button" id="btnAplicarFiltroGlobal" class="btn btn-sm btn-primary rounded-pill px-3">
+                            <i class="fas fa-sync me-1"></i>Aplicar Filtro
+                        </button>
+                        <button type="button" id="btnLimpiarFiltroGlobal" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                            <i class="fas fa-eraser me-1"></i>Limpiar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- SECCIÓN TOP 3 CATEGORÍAS Y SUBCATEGORÍAS CON GRAN TOTAL -->
+    <div class="row g-4 mb-4 align-items-stretch">
+        <!-- Categoría Top 1 -->
+        <div class="col-md-4">
+            <div class="card Charts-style-glass h-100 position-relative">
+                <div class="card-header py-3 d-flex align-items-center justify-content-between gap-1">
+                    <span class="badge bg-danger rounded-pill px-2 py-1 flex-shrink-0"><i class="fas fa-trophy me-1"></i>Top 1</span>
+                    <div class="d-flex align-items-center justify-content-end text-end flex-grow-1 min-w-0 gap-2">
+                        <h6 class="mb-0 fw-bold text-dark text-truncate" id="txtTop1Categoria">Cargando...</h6>
+                        <span class="badge bg-light text-danger border border-danger-subtle rounded-pill fw-bold" id="badgeTop1Total">0</span>
+                    </div>
+                </div>
+                <div class="card-body p-3 d-flex flex-column justify-content-center" style="min-height: 200px;">
+                    <canvas id="chartTop1Subcategorias"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categoría Top 2 -->
+        <div class="col-md-4">
+            <div class="card Charts-style-glass h-100 position-relative">
+                <div class="card-header py-3 d-flex align-items-center justify-content-between gap-1">
+                    <span class="badge bg-warning text-dark rounded-pill px-2 py-1 flex-shrink-0"><i class="fas fa-medal me-1"></i>Top 2</span>
+                    <div class="d-flex align-items-center justify-content-end text-end flex-grow-1 min-w-0 gap-2">
+                        <h6 class="mb-0 fw-bold text-dark text-truncate" id="txtTop2Categoria">Cargando...</h6>
+                        <span class="badge bg-light text-warning-override border border-warning-subtle rounded-pill fw-bold" style="color: #b17a00;" id="badgeTop2Total">0</span>
+                    </div>
+                </div>
+                <div class="card-body p-3 d-flex flex-column justify-content-center" style="min-height: 200px;">
+                    <canvas id="chartTop2Subcategorias"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categoría Top 3 -->
+        <div class="col-md-4">
+            <div class="card Charts-style-glass h-100 position-relative">
+                <div class="card-header py-3 d-flex align-items-center justify-content-between gap-1">
+                    <span class="badge bg-info text-dark rounded-pill px-2 py-1 flex-shrink-0"><i class="fas fa-award me-1"></i>Top 3</span>
+                    <div class="d-flex align-items-center justify-content-end text-end flex-grow-1 min-w-0 gap-2">
+                        <h6 class="mb-0 fw-bold text-dark text-truncate" id="txtTop3Categoria">Cargando...</h6>
+                        <span class="badge bg-light text-info border border-info-subtle rounded-pill fw-bold" id="badgeTop3Total">0</span>
+                    </div>
+                </div>
+                <div class="card-body p-3 d-flex flex-column justify-content-center" style="min-height: 200px;">
+                    <canvas id="chartTop3Subcategorias"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row g-4 mb-4 align-items-stretch">
+        <div class="col-md-11">
+            <div class="card Charts-style-glass h-100">
+                <div class="card-header py-3 d-flex align-items-center justify-content-between">
+                    <h5 class="card-title mb-0 fw-bold text-dark">
+                        <i class="fas fa-chart-bar me-2 text-primary"></i>Rendimiento Anual: Creados vs Cerrados
+                    </h5>
+                    <span class="badge bg-light text-dark fw-semibold px-3 py-2 rounded-pill border">
+                        Año <span id="lblAnioActual"></span>
+                    </span>
+                </div>
+                <div class="card-body p-4">
+                    <div style="position: relative; height: 320px; width: 100%;">
+                        <canvas id="chartTicketsAnual"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRÁFICA: TOP 5 ÁREAS CON MÁS TICKETS -->
+    <div class="row g-4 mb-4 align-items-stretch">
+        <div class="col-md-6">
+            <div class="card Charts-style-glass">
+                <div class="card-header py-3 d-flex align-items-center justify-content-between">
+                    <h5 class="card-title mb-0 fw-bold text-dark">
+                        <i class="fas fa-tasks me-2 text-primary"></i>Distribución de Tickets por Estado Actual
+                    </h5>
+                </div>
+
+                <div class="card-body p-4">
+                    <div style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="chartEstadosTickets"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col col-md-6">
+            <div class="card Charts-style-glass h-100">
+                <div class="card-header py-3">
+                    <h5 class="card-title mb-0 fw-bold text-dark">
+                        <i class="fas fa-building me-2 text-primary"></i>Demanda por Departamento: Top 5 Áreas con Mayor Incidencia
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div style="position: relative; height: 280px; width: 100%;">
+                        <canvas id="chartTopAreas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Asegúrate de incluir la librería Chart.js si no la tienes en tu Layout -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+
+<script>
+    // Variable de respaldo global para mantener viva la estructura de la gráfica en la memoria del navegador
+    let chartAnualInstancia = null;
+
+    function cargarGraficaTickets(inicio = '', fin = '') {
+        let url = `/Dashboard/ObtenerMetricasAnuales?inicio=${inicio}&fin=${fin}`;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                // BLINDAJE 1: Validamos que el elemento exista en el HTML
+                const canvasElement = document.getElementById('chartTicketsAnual');
+                if (!canvasElement) return;
+
+                const ctx = canvasElement.getContext('2d');
+
+                // =========================================================================
+                // MODO FLUIDO: Si la gráfica YA EXISTE, mutamos sus valores internos.
+                // Esto hace que las barras suban o bajen con una animación suave sin parpadear.
+                // =========================================================================
+                if (chartAnualInstancia !== null) {
+                    chartAnualInstancia.data.datasets[0].data = data.creados;  // Dataset Generados
+                    chartAnualInstancia.data.datasets[1].data = data.cerrados; // Dataset Cerrados
+
+                    chartAnualInstancia.update({
+                        duration: 800,
+                        easing: 'easeOutQuart' // Curva elástica de animación
+                    });
+                    return; // Cortamos el flujo aquí para evitar el error de Canvas en uso
+                }
+
+                // BLINDAJE EXTRA DE HARDWARE: Desalojo preventivo en el core de Chart.js
+                const graficoExistenteEnCanvas = Chart.getChart("chartTicketsAnual");
+                if (graficoExistenteEnCanvas) {
+                    graficoExistenteEnCanvas.destroy();
+                }
+
+                const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+                // CARGA INICIAL: Creamos la instancia limpiamente la primera vez
+                chartAnualInstancia = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: meses,
+                        datasets: [
+                            {
+                                label: 'Tickets Generados',
+                                data: data.creados,
+                                backgroundColor: 'rgba(13, 110, 253, 0.75)',
+                                borderColor: 'rgb(13, 110, 253)',
+                                borderWidth: 1,
+                                borderRadius: 6,
+                                barPercentage: 0.8,
+                                categoryPercentage: 0.7
+                            },
+                            {
+                                label: 'Tickets Cerrados',
+                                data: data.cerrados,
+                                backgroundColor: 'rgba(25, 135, 84, 0.75)',
+                                borderColor: 'rgb(25, 135, 84)',
+                                borderWidth: 1,
+                                borderRadius: 6,
+                                barPercentage: 0.8,
+                                categoryPercentage: 0.7
+                            }
+                        ]
+                    },
+                    plugins: [ChartDataLabels],
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 1000 // Duración de entrada inicial al abrir la página
+                        },
+                        plugins: {
+                            // **NEGRITAS Y MÁS GRANDE**: Leyenda de la parte superior
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    usePointStyle: true,
+                                    boxWidth: 10,
+                                    font: { weight: 'bold', family: 'system-ui', size: 13 }
+                                }
+                            },
+                            // **NEGRITAS**: Cuadro emergente interactivo (Tooltip)
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                padding: 12,
+                                titleFont: { family: 'system-ui', weight: 'bold', size: 13 },
+                                bodyFont: { family: 'system-ui', weight: 'bold', size: 13 }
+                            },
+                            // **MÁS GRANDES Y NEGRITAS**: Cantidades fijas flotantes arriba de cada barra
+                            datalabels: {
+                                anchor: 'end',
+                                align: 'top',
+                                offset: 3,
+                                font: {
+                                    weight: 'bold', // Fuerza negritas en el número
+                                    size: 15,       // Incrementado notablemente a 15px
+                                    family: 'system-ui'
+                                },
+                                formatter: value => value > 0 ? value : '', // Oculta ceros
+                                color: context => context.dataset.borderColor
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { font: { family: 'system-ui', weight: 'bold', size: 13 } } // **NEGRITAS** en los Meses
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1,
+                                    precision: 0,
+                                    font: { family: 'system-ui', weight: 'bold', size: 12 } // **NEGRITAS** en eje Y
+                                },
+                                grace: '15%' // Colchón amplio del 15% arriba para evitar recortes del texto grande
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Error al cargar la gráfica del dashboard:', error));
+    }
+</script>
+
+
+<script>
+    // Variable global para controlar la instancia del gráfico en la memoria del navegador
+    let miGraficoEstados = null;
+
+    document.addEventListener("DOMContentLoaded", function () {
+        cargarGraficaEstadosAnual();
+    });
+
+    function cargarGraficaEstadosAnual(inicio = '', fin = '') {
+        let url = '/Dashboard/ObtenerVolumenPorEstado';
+        if (inicio.trim() !== '' && fin.trim() !== '') {
+            url += `?inicio=${inicio}&fin=${fin}`;
+        }
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) throw new Error("Error al obtener volumen de estados");
+                return response.json();
+            })
+            .then(data => {
+                if (miGraficoEstados !== null) {
+                    miGraficoEstados.data.datasets[0].data = data.totales;
+                    miGraficoEstados.update({
+                        duration: 800,
+                        easing: 'easeOutQuart'
+                    });
+                    return;
+                }
+
+                const graficoExistenteEnCanvas = Chart.getChart("chartEstadosTickets");
+                if (graficoExistenteEnCanvas) {
+                    graficoExistenteEnCanvas.destroy();
+                }
+
+                renderizarGraficaEstadosCanvas(data.estados, data.totales);
+            })
+            .catch(error => console.error('Error al cargar gráfica de estados:', error));
+    }
+
+    function renderizarGraficaEstadosCanvas(labels, valores) {
+        const ctx = document.getElementById('chartEstadosTickets').getContext('2d');
+        if (!ctx) return;
+
+        const coloresFondo = [
+            'rgba(220, 53, 69, 0.75)',
+            'rgba(255, 193, 7, 0.75)',
+            'rgba(13, 202, 240, 0.75)',
+            'rgba(25, 135, 84, 0.75)'
+        ];
+
+        const coloresBorde = [
+            'rgb(220, 53, 69)',
+            'rgb(255, 193, 7)',
+            'rgb(13, 202, 240)',
+            'rgb(25, 135, 84)'
+        ];
+
+        miGraficoEstados = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: valores,
+                    backgroundColor: coloresFondo,
+                    borderColor: coloresBorde,
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    barPercentage: 0.5
+                }]
+            },
+            plugins: [ChartDataLabels],
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 1000
+                },
+                plugins: {
+                    legend: { display: false },
+
+                    tooltip: {
+                        padding: 12,
+                        titleFont: { family: 'system-ui', weight: 'bold', size: 13 },
+                        bodyFont: { family: 'system-ui', weight: 'bold', size: 13 }
+                    },
+
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        offset: 3,
+                        font: {
+                            weight: 'bold',
+                            size: 15,
+                            family: 'system-ui'
+                        },
+                        formatter: function(value) {
+                            return value > 0 ? value : '';
+                        },
+                        // **CAMBIADO**: Se fuerza el color negro sólido (#000000) en lugar del color del borde
+                        color: '#000000'
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { family: 'system-ui', weight: 'bold', size: 13 } }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, precision: 0, font: { family: 'system-ui', weight: 'bold', size: 12 } },
+                        grace: '15%'
+                    }
+                }
+            }
+        });
+    }
+</script>
+
+
+<script>
+        // Declaramos un arreglo global para vigilar las 3 instancias del Top 3 en memoria
+    let instanciasChartsTop3 = [null, null, null];
+
+    // Conecta esta función dentro de tu método maestro 'actualizarTodoElDashboard(inicio, fin)'
+    function cargarTop3Categorias(inicio = '', fin = '') {
+        let url = '/Dashboard/ObtenerTopCategoriasYSubcategorias';
+        if (inicio.trim() !== '' && fin.trim() !== '') {
+            url += `?inicio=${inicio}&fin=${fin}`;
+        }
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                for (let i = 0; i < 3; i++) {
+                    const numTarjeta = i + 1;
+                    const txtTitulo = document.getElementById(`txtTop${numTarjeta}Categoria`);
+                    const badgeTotal = document.getElementById(`badgeTop${numTarjeta}Total`); // Mapeo de la insignia
+                    const canvasId = `chartTop${numTarjeta}Subcategorias`;
+                    const canvasElement = document.getElementById(canvasId);
+
+                    if (!data[i] || !canvasElement) {
+                        if (txtTitulo) txtTitulo.textContent = "Sin Datos";
+                        if (badgeTotal) badgeTotal.textContent = "0";
+                        if (instanciasChartsTop3[i] !== null) {
+                            instanciasChartsTop3[i].destroy();
+                            instanciasChartsTop3[i] = null;
+                        }
+                        continue;
+                    }
+
+                    // 1. Inyectamos los textos del catálogo correspondientes en la cabecera
+                    txtTitulo.textContent = data[i].categoria;
+                    if (badgeTotal) {
+                        badgeTotal.textContent = data[i].totalCategoria; // Inyecta el Gran Total del podio
+                    }
+
+                    const ctx = canvasElement.getContext('2d');
+
+                    // 2. BLINDAJE ABSOLUTO DE HARDWARE: Desalojo preventivo en Chart.js
+                    const graficoExistente = Chart.getChart(canvasId);
+                    if (graficoExistente) {
+                        graficoExistente.destroy();
+                    }
+
+                    if (instanciasChartsTop3[i] !== null) {
+                        try { instanciasChartsTop3[i].destroy(); } catch(e) {}
+                        instanciasChartsTop3[i] = null;
+                    }
+
+                    // 3. Colores estéticos asignados para cada Top (Rojo, Amarillo, Azul)
+                    const coloresPaleta = [
+                        { fondo: 'rgba(220, 53, 69, 0.75)', borde: 'rgb(220, 53, 69)' },   // Top 1
+                        { fondo: 'rgba(255, 193, 7, 0.75)', borde: 'rgb(255, 193, 7)' },   // Top 2
+                        { fondo: 'rgba(13, 202, 240, 0.75)', borde: 'rgb(13, 202, 240)' }  // Top 3
+                    ];
+
+                    // 4. Inicializar la nueva gráfica de barras horizontales compactas
+                    instanciasChartsTop3[i] = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: data[i].subcategorias, // Nombres de las subcategorías
+                            datasets: [{
+                                data: data[i].totales, // Cantidades
+                                backgroundColor: coloresPaleta[i].fondo,
+                                borderColor: coloresPaleta[i].borde,
+                                borderWidth: 1,
+                                borderRadius: 4,
+                                barPercentage: 0.6
+                            }]
+                        },
+                        plugins: [ChartDataLabels],
+                        options: {
+                            indexAxis: 'y', // CLAVE: Voltea la gráfica horizontalmente
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                // **NEGRITAS**: Cuadro emergente interactivo (Tooltip)
+                                tooltip: {
+                                    padding: 10,
+                                    titleFont: { family: 'system-ui', weight: 'bold', size: 12 },
+                                    bodyFont: { family: 'system-ui', weight: 'bold', size: 12 }
+                                },
+                                // **MÁS GRANDES Y NEGRITAS**: Cantidades flotando a la derecha de las barras
+                                datalabels: {
+                                    anchor: 'end',
+                                    align: 'right',
+                                    offset: 5,
+                                    font: {
+                                        weight: 'bold', // Fuerza negritas en el número
+                                        size: 14,       // Incrementado notablemente a 14px
+                                        family: 'system-ui'
+                                    },
+                                    formatter: val => val > 0 ? val : '', // Oculta ceros
+                                    color: '#000000' // <-- CAMBIADO: Ahora las cantidades se renderizan en negro
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    beginAtZero: true,
+                                    ticks: { stepSize: 1, precision: 0, display: false }, // Oculta números del eje X para que no estorben
+                                    grid: { display: false },
+                                    border: { display: false },
+                                    grace: '20%' // Colchón extra aumentado al 20% a la derecha para las etiquetas grandes tamaño 14
+                                },
+                                y: {
+                                    grid: { display: false },
+                                    ticks: {
+                                        // **NEGRITAS Y MÁS GRANDE**: Nombres de las subcategorías legibles
+                                        font: { family: 'system-ui', size: 13, weight: 'bold' }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            })
+            .catch(error => console.error('Error al cargar el Top 3 de Servicios:', error));
+    }
+
+</script>
+
+
+<script>
+    // Variable global de respaldo para vigilar el lienzo de las áreas en la RAM del navegador
+    let chartAreasInstancia = null;
+
+    function cargarGraficaTopAreas(inicio = '', fin = '') {
+        // Inyectamos las variables al QueryString del filtro global
+        let url = `/Dashboard/ObtenerTopAreas?inicio=${inicio}&fin=${fin}`;
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) throw new Error("Error al obtener el Top de áreas");
+                return response.json();
+            })
+            .then(data => {
+                const ctx = document.getElementById('chartTopAreas').getContext('2d');
+                if (!ctx) return;
+
+                if (chartAreasInstancia !== null) {
+                    chartAreasInstancia.data.labels = data.areas; 
+                    chartAreasInstancia.data.datasets[0].data = data.totales; 
+
+                    chartAreasInstancia.update({
+                        duration: 800,
+                        easing: 'easeOutQuart'
+                    });
+                    return; 
+                }
+
+                // BLINDAJE DE HARDWARE: Desalojo preventivo en el core de Chart.js
+                const graficoExistenteEnCanvas = Chart.getChart("chartTopAreas");
+                if (graficoExistenteEnCanvas) {
+                    graficoExistenteEnCanvas.destroy();
+                }
+
+                // CARGA INICIAL: Primera vez que monta la tarjeta en pantalla
+                chartAreasInstancia = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.areas,
+                        datasets: [{
+                            label: 'Tickets Generados',
+                            data: data.totales,
+                            backgroundColor: 'rgba(13, 110, 253, 0.75)',
+                            borderColor: 'rgb(13, 110, 253)',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            barPercentage: 0.5
+                        }]
+                    },
+                    plugins: [ChartDataLabels], 
+                    options: {
+                        indexAxis: 'y', 
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }, 
+                            
+                            tooltip: {
+                                padding: 12,
+                                titleFont: { family: 'system-ui', weight: 'bold', size: 13 },
+                                bodyFont: { family: 'system-ui', weight: 'bold', size: 13 }
+                            },
+                          
+                            datalabels: {
+                                anchor: 'end',       
+                                align: 'right',      
+                                offset: 5,         
+                                font: {
+                                    weight: 'bold', 
+                                    size: 14,       
+                                    family: 'system-ui'
+                                },
+                                formatter: val => val > 0 ? val : '',
+                                color: '#000000' 
+                            }
+                        },
+                        scales: {
+                         
+                            x: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1,
+                                    precision: 0,
+                                    font: { family: 'system-ui', weight: 'bold', size: 12 } 
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Volumen de Reportes',
+                                    font: { weight: 'bold', family: 'system-ui', size: 13 } 
+                                },
+                                grace: '12%'
+                            },
+                            y: {
+                                grid: { display: false }, 
+                                ticks: {
+                                    font: { family: 'system-ui', weight: 'bold', size: 13 } 
+                                }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Error al cargar gráfica de áreas:', error));
+    }
+</script>
+
+<script>
+        document.addEventListener("DOMContentLoaded", function () {
+        // 1. Establecer rango por defecto en los inputs (Enero 1 al día de hoy)
+        const anioActual = new Date().getFullYear();
+        const hoy = new Date().toISOString().split('T')[0];
+
+        document.getElementById('globalFechaInicio').value = `${anioActual}-01-01`;
+        document.getElementById('globalFechaFin').value = hoy;
+
+        // Coloca el año en tus etiquetas de interfaz
+        const lblAnio = document.getElementById('lblAnioActual');
+        if (lblAnio) lblAnio.textContent = anioActual;
+
+        // 2. Carga inicial de todas las gráficas
+        actualizarTodoElDashboard();
+
+        // 3. Escuchar clic del botón Aplicar Filtro
+        document.getElementById('btnAplicarFiltroGlobal').addEventListener('click', function() {
+            actualizarTodoElDashboard();
+        });
+
+        // 4. Escuchar clic del botón Limpiar (Regresa al año actual por defecto)
+        document.getElementById('btnLimpiarFiltroGlobal').addEventListener('click', function() {
+            document.getElementById('globalFechaInicio').value = `${anioActual}-01-01`;
+            document.getElementById('globalFechaFin').value = hoy;
+            actualizarTodoElDashboard();
+        });
+    });
+
+    // FUNCIÓN MAESTRA DE CONEXIÓN
+    function actualizarTodoElDashboard() {
+        const inicio = document.getElementById('globalFechaInicio').value;
+        const fin = document.getElementById('globalFechaFin').value;
+
+        // Valida que si se ingresó una fecha, se ingresen ambas
+        if ((inicio && !fin) || (!inicio && fin)) {
+            alert("Por favor, selecciona un rango de fechas completo (Desde y Hasta).");
+            return;
+        }
+
+        // Pasamos los parámetros de manera unificada a todas tus funciones existentes
+        cargarGraficaTickets(inicio, fin);          // Creados vs Cerrados
+        cargarGraficaEstadosAnual(inicio, fin);     // Distribución por Estado
+        cargarTop3Categorias(inicio, fin);
+        cargarGraficaTopAreas(inicio, fin);
+    }
+</script>
+
+<script>
+           document.addEventListener("DOMContentLoaded", function () {
+        const btnFullscreen = document.getElementById('btnFullscreenDashboard');
+
+        // SOLUCIÓN DE RAÍZ: Buscamos el contenedor real del Layout base de tu proyecto
+        const contenedorLayout = document.getElementById('dashboardPrincipal');
+
+        if (btnFullscreen && contenedorLayout) {
+            btnFullscreen.addEventListener('click', function () {
+                // 1. Si NO está en pantalla completa, maximizamos el <main> del Layout
+                if (!document.fullscreenElement) {
+                    contenedorLayout.requestFullscreen()
+                        .then(() => {
+                            // Cambiamos el estilo y texto del botón de forma estética
+                            btnFullscreen.innerHTML = '<i class="fas fa-compress me-1"></i> <span>Salir</span>';
+                            btnFullscreen.className = "btn btn-outline-dark rounded-pill px-3 shadow-sm";
+                        })
+                        .catch(err => {
+                            console.error(`Error de hardware al maximizar el Layout: ${err.message}`);
+                        });
+                } else {
+                    // 2. Si YA ESTÁ en pantalla completa, salimos de ella
+                    document.exitFullscreen();
+                }
+            });
+
+            // =========================================================================
+            // ESCUCHADOR DE CAMBIO DE ESTADO (Detecta también si presionan la tecla 'Esc')
+            // =========================================================================
+            document.addEventListener('fullscreenchange', function () {
+                if (!document.fullscreenElement) {
+                    // Restauramos el botón a su diseño original de la vista
+                    btnFullscreen.innerHTML = '<i class="fas fa-expand me-1"></i> <span>Pantalla Completa</span>';
+                    btnFullscreen.className = "btn btn-dark rounded-pill px-3 shadow-sm";
+
+                    // RE-AJUSTE ELÁSTICO: Sincroniza el tamaño de todas tus gráficas al instante
+                    setTimeout(() => {
+                        // Recorremos el registro central de Chart.js para redimensionar tus 7 componentes al unísono
+                        Object.keys(Chart.instances).forEach(function (id) {
+                            if (Chart.instances[id]) {
+                                Chart.instances[id].resize();
+                                Chart.instances[id].render();
+                            }
+                        });
+                    }, 150); // 150ms son perfectos ya que el contenedor raíz nunca perdió sus estilos de Bootstrap
+                }
+            });
+        }
+    });
+
+</script>
+

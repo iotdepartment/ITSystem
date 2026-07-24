@@ -16,6 +16,11 @@ namespace ITSystem.Controllers
 
             return View();
         }
+        public IActionResult DashboardPlanta()
+        {
+
+            return View();
+        }
 
         [HttpGet]
         public IActionResult ObtenerMetricasAnuales(DateTime? inicio, DateTime? fin)
@@ -211,14 +216,14 @@ namespace ITSystem.Controllers
                 DateTime fechaInicio = inicio ?? new DateTime(anioActual, 1, 1);
                 DateTime fechaFin = fin ?? DateTime.Now;
 
-                // Forzamos el último segundo del día seleccionado para no perder registros de la jornada
+                // Forzamos el último segundo del día seleccionado para incluir la jornada completa
                 fechaFin = new DateTime(fechaFin.Year, fechaFin.Month, fechaFin.Day, 23, 59, 59);
 
-                // Inicializamos arreglos limpios para los 12 meses (Ene a Dic)
-                double[] promedioAtencionHoras = new double[12];
-                double[] promedioSolucionDias = new double[12];
+                // Inicializamos arreglos de 12 posiciones para almacenar los minutos promedio
+                double[] promedioAtencionMinutos = new double[12];
+                double[] promedioSolucionMinutos = new double[12];
 
-                // 2. Traer los tickets que fueron creados dentro del periodo de forma segura validadando nulos en SQL
+                // 2. Traer los tickets que fueron creados dentro del periodo de forma segura validando nulos en SQL
                 var ticketsDelRango = _context.Tickets
                     .Where(t => t.FechaCreacion.HasValue &&
                                 t.FechaCreacion.Value >= fechaInicio &&
@@ -232,34 +237,36 @@ namespace ITSystem.Controllers
                         .Where(t => t.FechaCreacion.Value.Month == mes)
                         .ToList();
 
-                    // --- CÁLCULO 1: TIEMPO DE ATENCIÓN (De Creación a Proceso) ---
+                    // --- CÁLCULO 1: TIEMPO DE ATENCIÓN (De Creación a Proceso) EN MINUTOS ---
                     var ticketsAtendidos = ticketsDelMes
                         .Where(t => t.FechaActualizacion.HasValue && t.Estado != "Nuevo" && t.Estado != "Por Atender")
                         .ToList();
 
                     if (ticketsAtendidos.Any())
                     {
-                        double totalHoras = ticketsAtendidos.Sum(t => (t.FechaActualizacion.Value - t.FechaCreacion.Value).TotalHours);
-                        promedioAtencionHoras[mes - 1] = Math.Round(totalHoras / ticketsAtendidos.Count, 1);
+                        // CAMBIO: Calculamos la diferencia total en Minutos nativos de .NET
+                        double totalMinutosAtencion = ticketsAtendidos.Sum(t => (t.FechaActualizacion.Value - t.FechaCreacion.Value).TotalMinutes);
+                        promedioAtencionMinutos[mes - 1] = Math.Round(totalMinutosAtencion / ticketsAtendidos.Count, 0); // Redondeo sin decimales
                     }
 
-                    // --- CÁLCULO 2: TIEMPO DE SOLUCIÓN (De Creación a Cierre) ---
+                    // --- CÁLCULO 2: TIEMPO DE SOLUCIÓN (De Creación a Cierre) EN MINUTOS ---
                     var ticketsResueltos = ticketsDelMes
                         .Where(t => t.FechaCierre.HasValue && t.Estado == "Resuelto")
                         .ToList();
 
                     if (ticketsResueltos.Any())
                     {
-                        double totalDias = ticketsResueltos.Sum(t => (t.FechaCierre.Value - t.FechaCreacion.Value).TotalDays);
-                        promedioSolucionDias[mes - 1] = Math.Round(totalDias / ticketsResueltos.Count, 1);
+                        // CAMBIO: Calculamos la diferencia total en Minutos nativos de .NET
+                        double totalMinutosSolucion = ticketsResueltos.Sum(t => (t.FechaCierre.Value - t.FechaCreacion.Value).TotalMinutes);
+                        promedioSolucionMinutos[mes - 1] = Math.Round(totalMinutosSolucion / ticketsResueltos.Count, 0); // Redondeo sin decimales
                     }
                 }
 
-                // 4. Retornar las métricas calculadas a Chart.js
+                // 4. Retornar las métricas calculadas en minutos a Chart.js
                 return Ok(new
                 {
-                    atencion = promedioAtencionHoras,
-                    solucion = promedioSolucionDias
+                    atencion = promedioAtencionMinutos,
+                    solucion = promedioSolucionMinutos
                 });
             }
             catch (Exception ex)
@@ -268,6 +275,7 @@ namespace ITSystem.Controllers
                 return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
+
 
 
         [HttpGet]
@@ -517,6 +525,156 @@ namespace ITSystem.Controllers
                 pendientes = pendientesYOtros,
                 porcentajeCumplimiento = porcentaje
             });
+        }
+
+        [HttpGet]
+        public IActionResult ObtenerTopCategoriasYSubcategorias(DateTime? inicio, DateTime? fin)
+        {
+            try
+            {
+                // 1. Configurar rango de fechas dinámico (Año actual por defecto)
+                int anioActual = DateTime.Now.Year;
+                DateTime fechaInicio = inicio ?? new DateTime(anioActual, 1, 1);
+                DateTime fechaFin = fin ?? DateTime.Now;
+                fechaFin = new DateTime(fechaFin.Year, fechaFin.Month, fechaFin.Day, 23, 59, 59);
+
+                // 2. Traer catálogos base en memoria RAM usando tus claves 'Id' en minúsculas
+                var listaCategorias = _context.Categorias.ToDictionary(c => c.Id, c => c.Nombre ?? "Sin Categoría");
+                var listaSubcategorias = _context.Subcategorias.ToDictionary(s => s.Id, s => s.Nombre ?? "Sin Subcategoría");
+
+                // 3. Descargar tickets del periodo solicitado
+                var ticketsDelRango = _context.Tickets
+                    .Where(t => t.FechaCreacion.HasValue &&
+                                t.FechaCreacion.Value >= fechaInicio &&
+                                t.FechaCreacion.Value <= fechaFin)
+                    .ToList();
+
+                // 4. Traducir llaves foráneas usando tu lógica de reflexión blindada
+                var ticketsMapeados = ticketsDelRango.Select(t =>
+                {
+                    int catId = 0; int subId = 0;
+                    var propiedades = t.GetType().GetProperties();
+
+                    var propCat = propiedades.FirstOrDefault(p => p.Name.Equals("CategoriaId", StringComparison.OrdinalIgnoreCase) || p.Name.Equals("CategoriaID", StringComparison.OrdinalIgnoreCase));
+                    if (propCat != null) catId = Convert.ToInt32(propCat.GetValue(t) ?? 0);
+
+                    var propSub = propiedades.FirstOrDefault(p => p.Name.Equals("SubcategoriaId", StringComparison.OrdinalIgnoreCase) || p.Name.Equals("SubcategoriaID", StringComparison.OrdinalIgnoreCase));
+                    if (propSub != null) subId = Convert.ToInt32(propSub.GetValue(t) ?? 0);
+
+                    return new
+                    {
+                        Categoria = listaCategorias.ContainsKey(catId) ? listaCategorias[catId] : "General",
+                        Subcategoria = listaSubcategorias.ContainsKey(subId) ? listaSubcategorias[subId] : "General"
+                    };
+                }).ToList();
+
+                // 5. Encontrar el Top 3 de Categorías con más tickets
+                var topCategorias = ticketsMapeados
+                    .GroupBy(x => x.Categoria)
+                    .Select(g => new { Categoria = g.Key, Total = g.Count() })
+                    .OrderByDescending(x => x.Total)
+                    .Take(3)
+                    .ToList();
+
+                var resultadoFinal = new List<object>();
+
+                foreach (var itemCat in topCategorias)
+                {
+                    var topSubcategorias = ticketsMapeados
+                        .Where(x => x.Categoria == itemCat.Categoria)
+                        .GroupBy(x => x.Subcategoria)
+                        .Select(g => new { Subcategoria = g.Key, Cantidad = g.Count() })
+                        .OrderByDescending(x => x.Cantidad)
+                        .Take(3)
+                        .ToList();
+
+                    resultadoFinal.Add(new
+                    {
+                        categoria = itemCat.Categoria,
+                        totalCategoria = itemCat.Total, // <-- ADICIÓN: Enviamos el acumulado total de la categoría principal
+                        subcategorias = topSubcategorias.Select(s => s.Subcategoria).ToList(),
+                        totales = topSubcategorias.Select(s => s.Cantidad).ToList()
+                    });
+                }
+
+                return Ok(resultadoFinal);
+
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public IActionResult ObtenerTopAreas(DateTime? inicio, DateTime? fin)
+        {
+            try
+            {
+                // 1. Configurar rango de fechas dinámico (Año actual por defecto si viene vacío)
+                int anioActual = DateTime.Now.Year;
+                DateTime fechaInicio = inicio ?? new DateTime(anioActual, 1, 1);
+                DateTime fechaFin = fin ?? DateTime.Now;
+                fechaFin = new DateTime(fechaFin.Year, fechaFin.Month, fechaFin.Day, 23, 59, 59);
+
+                // 2. Traer catálogo de Áreas mapeando el ID principal (usamos .Id o .ID de acuerdo a tus tablas)
+                // Buscamos dinámicamente si tu modelo Areas usa 'Id' o 'ID'
+                var listaAreasBase = _context.Areas.ToList();
+                var propIdArea = typeof(Areas).GetProperties().FirstOrDefault(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase) || p.Name.Equals("ID", StringComparison.OrdinalIgnoreCase));
+
+                var diccionarioAreas = listaAreasBase.ToDictionary(
+                    a => propIdArea != null ? Convert.ToInt32(propIdArea.GetValue(a)) : 0,
+                    a => a.Nombre ?? "Área sin Nombre"
+                );
+
+                // 3. Descargar el lote de tickets correspondiente al periodo filtrado
+                var ticketsDelRango = _context.Tickets
+                    .Where(t => t.FechaCreacion.HasValue &&
+                                t.FechaCreacion.Value >= fechaInicio &&
+                                t.FechaCreacion.Value <= fechaFin)
+                    .ToList();
+
+                // 4. Agrupar la información evaluando la llave foránea del Área en la tabla de Tickets
+                var agrupadoAreas = ticketsDelRango
+                    .GroupBy(t =>
+                    {
+                        int? areaId = null;
+                        var propiedades = t.GetType().GetProperties();
+                        var propTicketArea = propiedades.FirstOrDefault(p => p.Name.Equals("AreaId", StringComparison.OrdinalIgnoreCase) ||
+                                                                             p.Name.Equals("AreaID", StringComparison.OrdinalIgnoreCase) ||
+                                                                             p.Name.Equals("IdArea", StringComparison.OrdinalIgnoreCase));
+                        if (propTicketArea != null)
+                        {
+                            var valor = propTicketArea.GetValue(t);
+                            if (valor != null) areaId = Convert.ToInt32(valor);
+                        }
+
+                        return (areaId.HasValue && diccionarioAreas.ContainsKey(areaId.Value)) ? diccionarioAreas[areaId.Value] : "No Especificada";
+                    })
+                    .Select(g => new
+                    {
+                        AreaNombre = g.Key,
+                        Cantidad = g.Count()
+                    })
+                    .OrderByDescending(x => x.Cantidad) // Departamentos con más reportes primero
+                    .Take(5) // Filtramos estrictamente al Top 5 solicitado
+                    .ToList();
+
+                // 5. Separar en listas independientes sincronizadas para Chart.js
+                var nombresAreas = agrupadoAreas.Select(x => x.AreaNombre).ToList();
+                var totalesTickets = agrupadoAreas.Select(x => x.Cantidad).ToList();
+
+                return Ok(new
+                {
+                    areas = nombresAreas,
+                    totales = totalesTickets
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error en ObtenerTopAreas: {ex.Message}");
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
         }
 
     }

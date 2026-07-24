@@ -8,7 +8,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - ITSystem</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <!-- Eliminado enlace externo de jsdelivr para evitar el error ERR_CONNECTION_TIMED_OUT -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ITSystem.styles.css" asp-append-version="true" />
     <link rel="icon" type="image/png" href="~/Images/Logo.png" />
@@ -32,7 +31,7 @@
                 left: 0;
                 width: 260px !important;
                 z-index: 1030;
-                display: flex !important; /* Fuerza a estar siempre visible */
+                display: flex !important; 
             }
 
             .main-content-responsive {
@@ -41,7 +40,7 @@
             }
 
             .navbar-toggler {
-                display: none !important; /* Oculta el botón hamburguesa en PC */
+                display: none !important;
             }
         }
     </style>
@@ -66,6 +65,8 @@
 
         var esAdminOTecnico = rolUsuario == "Admin" || rolUsuario == "Tecnico";
         var controladorActual = ViewContext.RouteData.Values["Controller"]?.ToString();
+        // NUEVO: Obtener la acción actual para diferenciar vistas del mismo controlador
+        var accionActual = ViewContext.RouteData.Values["Action"]?.ToString();
     }
 
     <!-- Barra superior fija exclusiva para Celulares y Tablets -->
@@ -130,9 +131,17 @@
                                 </a>
                             </li>
                             <li>
+                                <!-- CORREGIDO: Valida que el controlador sea Dashboard Y la acción sea Index -->
                                 <a href="/Dashboard/Index"
-                                   class="nav-link d-flex align-items-center gap-2 @(controladorActual == "Dashboard" ? "active text-white" : "text-white-50")">
-                                    <i class="bi bi-speedometer2"></i> Dashboard
+                                   class="nav-link d-flex align-items-center gap-2 @(controladorActual == "Dashboard" && accionActual == "Index" ? "active text-white" : "text-white-50")">
+                                    <i class="bi bi-speedometer2"></i> Graficas de Personal
+                                </a>
+                            </li>
+                            <li>
+                                <!-- CORREGIDO: Valida que el controlador sea Dashboard Y la acción sea DashboardPlanta -->
+                                <a href="/Dashboard/DashboardPlanta"
+                                   class="nav-link d-flex align-items-center gap-2 @(controladorActual == "Dashboard" && accionActual == "DashboardPlanta" ? "active text-white" : "text-white-50")">
+                                    <i class="bi bi-speedometer2"></i> Graficas de Planta
                                 </a>
                             </li>
                         }
@@ -175,8 +184,8 @@
                 </div>
             </div>
 
-            <!-- Contenedor Principal dinámico -->
-            <main class="flex-grow-1 p-4 main-content-responsive">
+
+            <main class="flex-grow-1 p-4 main-content-responsive" id="dashboardPrincipal">
                 @RenderBody()
             </main>
 
@@ -189,7 +198,6 @@
         </div>
     </footer>
 
-    <!-- Scripts Locales -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
