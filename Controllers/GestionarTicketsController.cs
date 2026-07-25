@@ -127,6 +127,70 @@ namespace ITSystem.Controllers
         }
 
         [HttpPost]
+        public async Task<IActionResult> LiberarTicket(int id)
+        {
+            try
+            {
+                var todosLosTickets = await _context.Tickets.ToListAsync();
+                var ticket = todosLosTickets.FirstOrDefault(t =>
+                {
+                    var props = t.GetType().GetProperties();
+                    var propIdClave = props.FirstOrDefault(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase) ||
+                                                                 p.Name.Equals("ID", StringComparison.OrdinalIgnoreCase) ||
+                                                                 p.Name.Equals("IdTicket", StringComparison.OrdinalIgnoreCase));
+                    if (propIdClave != null)
+                    {
+                        var valorId = propIdClave.GetValue(t);
+                        return valorId != null && Convert.ToInt32(valorId) == id;
+                    }
+                    return false;
+                });
+
+                if (ticket == null)
+                {
+                    return NotFound(new { success = false, message = "El ticket solicitado no existe en la planta." });
+                }
+
+                // 1. Modificar el estado y la fecha de actualización del flujo
+                ticket.Estado = "Nuevo";
+                ticket.FechaActualizacion = DateTime.Now;
+
+                // 2. Localizar y limpiar la columna del Especialista Asignado de forma dinámica
+                var propiedades = ticket.GetType().GetProperties();
+                var propTecnico = propiedades.FirstOrDefault(p => p.Name.Equals("UsuarioAsignadoId", StringComparison.OrdinalIgnoreCase) ||
+                                                                  p.Name.Equals("UsuarioAsignadoID", StringComparison.OrdinalIgnoreCase) ||
+                                                                  p.Name.Equals("IdUsuarioAsignado", StringComparison.OrdinalIgnoreCase));
+
+                if (propTecnico != null)
+                {
+                    // Dejamos la columna en NULL para quitarle la asignación al especialista
+                    propTecnico.SetValue(ticket, null);
+                }
+
+                // 3. Estampar bitácora histórica automática (FORMATO SOLICITADO E IDÉNTICO A TU EJEMPLO)
+                string fechaFormateada = $"{DateTime.Now:dd/MM/yyyy}";
+                string nuevoComentario = $"[Ticket Liberado - {fechaFormateada}]: El ticket fue liberado por el especialista y regresó al flujo general de soporte.";
+
+                ticket.Comentarios = string.IsNullOrEmpty(ticket.Comentarios)
+                    ? nuevoComentario
+                    : $"{ticket.Comentarios}\n{nuevoComentario}";
+
+                // 4. Guardar en la Base de Datos y retornar éxito al JavaScript del modal
+                _context.Update(ticket);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { success = true, message = "Ticket liberado y regresado a la bandeja con éxito." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = $"Error interno en el servidor de planta: {ex.Message}" });
+            }
+        }
+
+
+
+
+        [HttpPost]
         public IActionResult AgregarNotaSeguimiento([FromBody] AgregarNotaRequest request)
         {
             if (request == null || request.Id <= 0 || string.IsNullOrEmpty(request.Comentario))

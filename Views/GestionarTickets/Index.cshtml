@@ -362,27 +362,29 @@
     </div>
 </div>
 
-<!-- MODAL PARA AGREGAR COMENTARIO -->
-<div class="modal card-glass fade" id="ModalAgregarComentario" tabindex="-1" aria-hidden="true">
+<!-- MODAL DE CONFIRMACIÓN PARA LIBERAR TICKET (ESTÉTICA CORPORATIVA) -->
+<div class="modal card-glass fade" id="ModalConfirmarLiberacion" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content shadow rounded-3">
-            <div class="modal-header bg-secondary text-white">
-                <h5 class="modal-title fw-bold">Agregar Nota de Seguimiento</h5>
+            <!-- Encabezado con color de alerta/advertencia corporativo -->
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Liberación
+                </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <p class="text-muted small">Esta nota se añadirá directamente al historial/bitácora del ticket sin alterar su estado actual.</p>
-                <textarea id="NotaSeguimientoTexto"
-                          class="form-control"
-                          rows="3"
-                          maxlength="150"
-                          placeholder="Escribe aquí el avance, llamada realizada o nota interna..."></textarea>
-                <div class="text-end mt-1">
-                    <small id="NotaSeguimientoCount" class="text-muted">0 / 150</small>
-                </div>
+
+            <div class="modal-body p-4 text-center">
+                <!-- ID oculto para que el JavaScript sepa qué ticket procesar -->
+                <input type="hidden" id="hdnLiberarTicketId" value="">
+
+                <p class="text-dark fw-bold fs-5 mb-2">¿Estás seguro de quitarte la asignación?</p>
+                <p class="text-muted mb-0">Esta acción removerá tu nombre del ticket. EL ticket volverá de inmediato a la bandeja general como <strong class="text-danger">"Nuevo"</strong> para que otro tecnico pueda atenderlo.</p>
             </div>
+
+            <!-- Pie del modal idéntico con botones redondeados -->
             <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-primary rounded-pill px-4" id="btnConfirmarNota">Guardar Nota</button>
+                <button type="button" class="btn btn-danger rounded-pill px-4" id="btnProcesarLiberacion">Confirmar</button>
                 <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
             </div>
         </div>
@@ -575,13 +577,13 @@
                         avatarModal.style.setProperty('display', 'flex', 'important');
                     }
 
-                    // CONTROL DINÁMICO DE BOTONES DE ACCIÓN (ACTUALIZADO)
+                    // CONTROL DINÁMICO DE BOTONES DE ACCIÓN (ACTUALIZADO CON LIBERACIÓN)
                     const contenedorAcciones = document.getElementById('contenedorAcciones');
                     if (contenedorAcciones) {
                         contenedorAcciones.innerHTML = '';
                         const currentId = ticket.id || ticketId;
 
-                        if (ticket.estado === "Nuevo" || ticket.estado === "Por Atender") { // Validamos tus dos nomenclaturas por seguridad
+                        if (ticket.estado === "Nuevo" || ticket.estado === "Por Atender") {
                             contenedorAcciones.innerHTML = `
                                 <button type="button" class="btn btn-success rounded-pill px-4 btn-accion-ticket" data-accion="Tomar" data-id="${currentId}">
                                     <i class="fas fa-hand-holding-hand me-1"></i> Tomar Ticket
@@ -590,6 +592,10 @@
                         }
                         else if (ticket.estado === "En Proceso") {
                             contenedorAcciones.innerHTML = `
+                                <!-- NUEVO BOTÓN: Liberar Ticket -->
+                                <button type="button" class="btn btn-danger rounded-pill px-3 me-2 btn-accion-ticket" data-accion="Liberar" data-id="${currentId}">
+                                    <i class="fas fa-undo me-1"></i> Liberar Ticket
+                                </button>
                                 <button type="button" class="btn btn-outline-secondary rounded-pill px-3 me-2 btn-accion-ticket" data-accion="Comentar" data-id="${currentId}">
                                     <i class="fas fa-comment-alt me-1"></i> Agregar Nota
                                 </button>
@@ -603,6 +609,10 @@
                         }
                         else if (ticket.estado === "En Espera") {
                             contenedorAcciones.innerHTML = `
+                                <!-- NUEVO BOTÓN: Liberar Ticket -->
+                                <button type="button" class="btn btn-danger rounded-pill px-3 me-2 btn-accion-ticket" data-accion="Liberar" data-id="${currentId}">
+                                    <i class="fas fa-undo me-1"></i> Liberar Ticket
+                                </button>
                                 <button type="button" class="btn btn-outline-secondary rounded-pill px-3 me-2 btn-accion-ticket" data-accion="Comentar" data-id="${currentId}">
                                     <i class="fas fa-comment-alt me-1"></i> Agregar Nota
                                 </button>
@@ -616,7 +626,6 @@
                         }
                     }
 
-
                     // Mostrar el modal de detalles principal
                     if (modalDetalles) modalDetalles.show();
 
@@ -627,7 +636,7 @@
             }
         });
 
-                // ==========================================
+        // ==========================================
         // 5. DELEGACIÓN DE EVENTOS DE ACCIONES (IT)
         // ==========================================
         const divAcciones = document.getElementById('contenedorAcciones');
@@ -745,6 +754,69 @@
                 }
             });
         }
+
+        document.addEventListener('click', function (e) {
+            const boton = e.target.closest('.btn-accion-ticket');
+            if (!boton) return;
+
+            const accion = boton.getAttribute('data-accion');
+            const id = boton.getAttribute('data-id');
+
+            // Cambiado: Ahora levanta el nuevo modal corporativo pasando el ID de forma segura
+            if (accion === "Liberar") {
+                const inputId = document.getElementById('hdnLiberarTicketId');
+                if (inputId) inputId.value = id;
+
+                // Inicializa y despliega el modal de confirmación estilizado
+                const modalConfirmar = new bootstrap.Modal(document.getElementById('ModalConfirmarLiberacion'));
+                modalConfirmar.show();
+            }
+            // ... Tus demás evaluaciones de acciones (Tomar, Esperar, Resolver) se quedan igual
+        });
+
+                document.addEventListener("DOMContentLoaded", function() {
+            const btnProcesar = document.getElementById('btnProcesarLiberacion');
+
+            if (btnProcesar) {
+                btnProcesar.addEventListener('click', function() {
+                    const id = document.getElementById('hdnLiberarTicketId').value;
+                    if (!id) return;
+
+                    // Deshabilitamos el botón para evitar clics duplicados en la base de datos
+                    btnProcesar.disabled = true;
+                    btnProcesar.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Procesando...';
+
+                    fetch(`/GestionarTickets/LiberarTicket?id=${id}`, {
+                        method: 'POST',
+                        headers: {
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                        }
+                    })
+                    .then(res => {
+                        if (!res.ok) throw new Error("Error al liberar el ticket");
+                        return res.json();
+                    })
+                    .then(data => {
+                        // 1. Cerramos el modal de confirmación
+                        const modalConfirmar = bootstrap.Modal.getInstance(document.getElementById('ModalConfirmarLiberacion'));
+                        if (modalConfirmar) modalConfirmar.hide();
+
+                        // 2. Cerramos el modal de detalles anterior
+                        const modalDetalles = bootstrap.Modal.getInstance(document.getElementById('ModalDetallesTicket'));
+                        if (modalDetalles) modalDetalles.hide();
+
+                        // 3. Recargamos la pantalla principal para actualizar los contadores y la tabla
+                        location.reload();
+                    })
+                    .catch(error => {
+                        alert(error.message);
+                        // Si falla la red local, restauramos el botón original
+                        btnProcesar.disabled = false;
+                        btnProcesar.innerHTML = '<i class="fas fa-check me-1"></i>Sí, Liberar';
+                    });
+                });
+            }
+        });
 
 
         // ==========================================
