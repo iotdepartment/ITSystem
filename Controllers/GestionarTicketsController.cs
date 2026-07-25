@@ -1,6 +1,6 @@
 ﻿using ITSystem.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore; // Necesario para usar .Include()
+using Microsoft.EntityFrameworkCore;
 
 namespace ITSystem.Controllers
 {
@@ -8,7 +8,6 @@ namespace ITSystem.Controllers
     {
         private readonly AppDbContext _context;
 
-        // El constructor ahora está correctamente dentro de la clase
         public GestionarTicketsController(AppDbContext context)
         {
             _context = context;
@@ -16,14 +15,12 @@ namespace ITSystem.Controllers
 
         public IActionResult Index()
         {
-            // Cargamos los tickets e incluimos sus tablas relacionales 
-            // para que la vista muestre toda la información detallada
             var tickets = _context.Tickets
                 .Include(t => t.Categoria)
                 .Include(t => t.Subcategoria)
                 .Include(t => t.UsuarioSolicitante)
                 .Include(t => t.Area)
-                .OrderByDescending(t => t.FechaCreacion) // Opcional: mostrar los más nuevos primero
+                .OrderByDescending(t => t.FechaCreacion)
                 .ToList();
 
             return View(tickets);
@@ -169,12 +166,11 @@ namespace ITSystem.Controllers
 
     }
 
-    // CLASE AUXILIAR ACTUALIZADA: Recibe el parámetro opcional desde el cliente
     public class CambiarEstadoRequest
     {
         public int Id { get; set; }
         public string Estado { get; set; } = string.Empty;
-        public string? Comentario { get; set; } // Propiedad añadida para el motivo
+        public string? Comentario { get; set; }
     }
 
 

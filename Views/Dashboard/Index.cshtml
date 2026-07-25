@@ -42,7 +42,6 @@
         </div>
     </div>
 
-
     <div class="row g-4 mb-4 align-items-stretch">
         <!-- Gráfica de Cumplimiento (Derecha) -->
         <div class="col col-md-4">
@@ -123,11 +122,9 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 
 <script>
-    // Variable global que mantendrá viva la estructura base de la gráfica en la memoria del navegador
     let chartCumplimientoInstancia = null;
 
     function cargarGraficaCumplimiento(inicio = '', fin = '') {
-        // Construimos la URL agregando las variables del filtro global
         let url = `/Dashboard/ObtenerPorcentajeCumplimiento?inicio=${inicio}&fin=${fin}`;
 
         fetch(url)
@@ -148,10 +145,7 @@
                 if (!ctx) return;
 
                 if (chartCumplimientoInstancia !== null) {
-                    // Reemplazamos los valores viejos por los nuevos datos filtrados
                     chartCumplimientoInstancia.data.datasets[0].data = [data.resueltos, data.pendientes];
-
-                    // **NEGRITAS**: Actualizamos la tooltip interactiva fluida
                     chartCumplimientoInstancia.options.plugins.tooltip.callbacks.label = function(context) {
                         const valor = context.raw;
                         const total = data.total;
@@ -167,7 +161,6 @@
                     return;
                 }
 
-                // CARGA INICIAL
                 chartCumplimientoInstancia = new Chart(ctx, {
                     type: 'doughnut',
                     data: {
@@ -196,7 +189,6 @@
                             animateScale: false
                         },
                         plugins: {
-                            // **NEGRITAS**: Estilo de las leyendas inferiores
                             legend: {
                                 position: 'bottom',
                                 labels: {
@@ -205,11 +197,10 @@
                                     font: {
                                         family: 'system-ui',
                                         size: 13,
-                                        weight: 'bold' // Pone las leyendas en negritas
+                                        weight: 'bold'
                                     }
                                 }
                             },
-                            // **NEGRITAS**: Estilo de los textos emergentes (Tooltips)
                             tooltip: {
                                 padding: 12,
                                 titleFont: { family: 'system-ui', weight: 'bold', size: 13 },
@@ -223,13 +214,12 @@
                                     }
                                 }
                             },
-                            // **MÁS GRANDES Y NEGRITAS**: Configuración de los números flotantes sobre la dona
                             datalabels: {
                                 anchor: 'center',
                                 align: 'center',
                                 font: {
-                                    weight: 'bold', // Fuerza negritas en las cantidades
-                                    size: 16,        // Escalado de tamaño a 16px para máxima legibilidad
+                                    weight: 'bold', 
+                                    size: 16,       
                                     family: 'system-ui'
                                 },
                                 formatter: function(value) {
@@ -250,20 +240,16 @@
 
 
 <script>
-    // Variable global de respaldo para el control de la gráfica de técnicos
     let chartTecnicosInstancia = null;
 
     document.addEventListener("DOMContentLoaded", function () {
         const lblAnio = document.getElementById('lblAnioActual');
         if (lblAnio) lblAnio.textContent = new Date().getFullYear();
 
-        // Carga inicial sin parámetros (tomará los valores por defecto)
         cargarGraficaPorTecnico();
     });
 
-    // Modificado: Ahora recibe los parámetros opcionales del rango global de fechas
     function cargarGraficaPorTecnico(inicio = '', fin = '') {
-        // Construimos la URL dinámica inyectando las variables de fecha
         let url = `/Dashboard/ObtenerTicketsPorTecnico?inicio=${inicio}&fin=${fin}`;
 
         fetch(url)
@@ -279,16 +265,14 @@
 
                 const graficoExistenteEnCanvas = Chart.getChart("chartTicketsPorTecnico");
                 if (graficoExistenteEnCanvas) {
-                    graficoExistenteEnCanvas.destroy(); // Desaloja y limpia el hardware de inmediato
+                    graficoExistenteEnCanvas.destroy();
                 }
 
-                // Limpieza preventiva de nuestra variable de control
                 if (chartTecnicosInstancia !== null) {
                     try { chartTecnicosInstancia.destroy(); } catch(e) {}
                     chartTecnicosInstancia = null;
                 }
 
-                // Construimos la gráfica sobre el canvas garantizado desocupado
                 chartTecnicosInstancia = new Chart(ctx, {
                     type: 'bar',
                     data: {
@@ -322,7 +306,6 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            // **NEGRITAS**: Estilo robusto para la leyenda superior
                             legend: {
                                 position: 'top',
                                 labels: {
@@ -331,7 +314,6 @@
                                     font: { family: 'system-ui', weight: 'bold', size: 12 }
                                 }
                             },
-                            // **NEGRITAS**: Cuadro emergente con tipografía sólida
                             tooltip: {
                                 mode: 'index',
                                 intersect: false,
@@ -339,14 +321,14 @@
                                 titleFont: { family: 'system-ui', weight: 'bold', size: 13 },
                                 bodyFont: { family: 'system-ui', weight: 'bold', size: 13 }
                             },
-                            // **MÁS GRANDES Y NEGRITAS**: Cantidades fijas flotantes al final de cada barra
+
                             datalabels: {
                                 anchor: 'end',
                                 align: 'right',
-                                offset: 5, // Separación sutil del borde de la barra
+                                offset: 5, 
                                 font: {
-                                    weight: 'bold', // Fuerza negritas en el número
-                                    size: 14,       // Incrementado a 14px para lectura inmediata
+                                    weight: 'bold', 
+                                    size: 14,       
                                     family: 'system-ui'
                                 },
                                 formatter: function(value) {
@@ -363,19 +345,19 @@
                                 ticks: {
                                     stepSize: 1,
                                     precision: 0,
-                                    font: { family: 'system-ui', weight: 'bold', size: 12 } // **NEGRITAS** en números del eje X
+                                    font: { family: 'system-ui', weight: 'bold', size: 12 } 
                                 },
                                 title: {
                                     display: true,
                                     text: 'Cantidad de Tickets',
-                                    font: { weight: 'bold', family: 'system-ui', size: 13 } // **NEGRITAS** en título del eje X
+                                    font: { weight: 'bold', family: 'system-ui', size: 13 } 
                                 },
-                                grace: '12%' // Aumentado a 12% para dar un colchón extra a los números grandes (tamaño 14) y evitar que se corten
+                                grace: '12%' 
                             },
                             y: {
                                 grid: { display: false },
                                 ticks: {
-                                    font: { family: 'system-ui', weight: 'bold', size: 12 } // **NEGRITAS** en nombres de técnicos (Eje Y)
+                                    font: { family: 'system-ui', weight: 'bold', size: 12 }
                                 }
                             }
                         }
@@ -389,7 +371,6 @@
 
 
 <script>
-    // Variable global para mantener viva la estructura de la gráfica en memoria RAM
     let chartTiemposInstancia = null;
 
     function cargarGraficaTiempos(inicio = '', fin = '') {
@@ -487,7 +468,6 @@
                                     if (value === 0) return '';
                                     return value + ' min';
                                 },
-                                // **CAMBIADO**: Se fuerza el color negro sólido (#000000) sobre los puntos de las líneas
                                 color: '#000000'
                             }
                         },
@@ -533,17 +513,14 @@
 
 
 <script>
-    // Variable global para mantener viva la estructura de la dona de efectividad en memoria
     let chartEfectividadInstancia = null;
 
     document.addEventListener("DOMContentLoaded", function () {
-        // Carga inicial por defecto al abrir la página
         cargarGraficaEfectividad();
     });
 
-    // Modificado: Ahora acepta los parámetros del rango de fechas global
+
     function cargarGraficaEfectividad(inicio = '', fin = '') {
-        // Construimos la URL dinámica agregando las variables del filtro
         let url = `/Dashboard/ObtenerEfectividadResolucion?inicio=${inicio}&fin=${fin}`;
 
         fetch(url)
@@ -552,21 +529,18 @@
                 return response.json();
             })
             .then(data => {
-                // 1. **MÁS GRANDE Y NEGRITAS**: Actualizar el porcentaje central inferior con clases robustas
+
                 const txtFcr = document.getElementById('txtFcrPorcentaje');
                 if (txtFcr) {
                     txtFcr.textContent = `${data.fcr}%`;
-                    txtFcr.className = "display-5 fw-extrabold text-dark mb-0"; // Estilo imponente de Bootstrap
+                    txtFcr.className = "display-5 fw-extrabold text-dark mb-0";
                 }
 
                 const ctx = document.getElementById('chartEfectividadResolucion').getContext('2d');
                 if (!ctx) return;
 
                 if (chartEfectividadInstancia !== null) {
-                    // Reemplazamos los valores viejos por los nuevos datos filtrados
                     chartEfectividadInstancia.data.datasets[0].data = [data.primera, data.segunda, data.extendido];
-
-                    // **NEGRITAS**: Actualizamos la tooltip interactiva fluida
                     chartEfectividadInstancia.options.plugins.tooltip.callbacks.label = function(context) {
                         const valor = context.raw;
                         const total = data.total;
@@ -574,7 +548,6 @@
                         return ` ${context.label}: ${valor} tickets (${pct}%)`;
                     };
 
-                    // Disparamos la actualización progresiva elástica (duración de 800ms)
                     chartEfectividadInstancia.update({
                         duration: 800,
                         easing: 'easeOutQuart'
@@ -605,7 +578,7 @@
                                 'rgb(255, 193, 7)'
                             ],
                             borderWidth: 1,
-                            cutout: '70%' // Reducido ligeramente al 70% para ensanchar el arco y contener números grandes
+                            cutout: '70%' 
                         }]
                     },
                     plugins: [ChartDataLabels],
@@ -617,7 +590,6 @@
                             animateRotate: true
                         },
                         plugins: {
-                            // **NEGRITAS Y MÁS GRANDE**: Estilo de las leyendas inferiores
                             legend: {
                                 position: 'bottom',
                                 labels: {
@@ -626,11 +598,10 @@
                                     font: {
                                         family: 'system-ui',
                                         size: 13,
-                                        weight: 'bold' // Leyendas robustas
+                                        weight: 'bold'
                                     }
                                 }
                             },
-                            // **NEGRITAS**: Estilo de los cuadros emergentes (Tooltips)
                             tooltip: {
                                 padding: 12,
                                 titleFont: { family: 'system-ui', weight: 'bold', size: 13 },
@@ -644,18 +615,17 @@
                                     }
                                 }
                             },
-                            // **MÁS GRANDES Y NEGRITAS**: Configuración de las cantidades fijas sobre los arcos
+  
                             datalabels: {
-                                anchor: 'center',    // Centra el número a la mitad del bloque de color
+                                anchor: 'center', 
                                 align: 'center',
                                 font: {
-                                    weight: 'bold', // Fuerza negritas en las cantidades
-                                    size: 16,        // Escalado de tamaño a 16px para máxima legibilidad
+                                    weight: 'bold', 
+                                    size: 16,        
                                     family: 'system-ui'
                                 },
-                                formatter: value => value > 0 ? value : '', // Oculta ceros
+                                formatter: value => value > 0 ? value : '', 
                                 color: function(context) {
-                                    // Letra blanca para secciones oscuras (verde/azul), letra oscura para el bloque amarillo
                                     return context.dataIndex === 2 ? '#333333' : '#ffffff';
                                 }
                             }
@@ -718,7 +688,7 @@
 </script>
 
 <script>
-           document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", function () {
         const btnFullscreen = document.getElementById('btnFullscreenDashboard');
 
         // SOLUCIÓN DE RAÍZ: Buscamos el contenedor real del Layout base de tu proyecto
@@ -743,25 +713,19 @@
                 }
             });
 
-            // =========================================================================
-            // ESCUCHADOR DE CAMBIO DE ESTADO (Detecta también si presionan la tecla 'Esc')
-            // =========================================================================
             document.addEventListener('fullscreenchange', function () {
                 if (!document.fullscreenElement) {
-                    // Restauramos el botón a su diseño original de la vista
                     btnFullscreen.innerHTML = '<i class="fas fa-expand me-1"></i> <span>Pantalla Completa</span>';
                     btnFullscreen.className = "btn btn-dark rounded-pill px-3 shadow-sm";
 
-                    // RE-AJUSTE ELÁSTICO: Sincroniza el tamaño de todas tus gráficas al instante
                     setTimeout(() => {
-                        // Recorremos el registro central de Chart.js para redimensionar tus 7 componentes al unísono
                         Object.keys(Chart.instances).forEach(function (id) {
                             if (Chart.instances[id]) {
                                 Chart.instances[id].resize();
                                 Chart.instances[id].render();
                             }
                         });
-                    }, 150); // 150ms son perfectos ya que el contenedor raíz nunca perdió sus estilos de Bootstrap
+                    }, 150);
                 }
             });
         }
