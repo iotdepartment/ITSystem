@@ -94,32 +94,27 @@
                                 <div class="row align-items-center g-2 small text-dark">
                                     <!-- LADO IZQUIERDO: Foto y Nombre del Solicitante -->
                                     <div class="col-7 d-flex align-items-center gap-2">
-                                        @if (ticket.UsuarioSolicitante != null && ticket.UsuarioSolicitante.NumeroEmpleado.HasValue)
-                                        {
-                                            <!-- Contenedor relativo para controlar la exclusión visual -->
-                                            <div class="d-flex align-items-center position-relative" style="width: 28px; height: 28px;">
-                                                <!-- La imagen se muestra por defecto -->
-                                                <img src="/Images/@(ticket.UsuarioSolicitante.NumeroEmpleado).jpg"
-                                                     alt="Foto"
-                                                     class="rounded-circle border position-absolute top-0 start-0"
-                                                     style="width: 28px; height: 28px; object-fit: cover; z-index: 2;"
-                                                     onerror="this.style.display='none'; document.getElementById('avatar-@ticket.Id').style.setProperty('display', 'flex', 'important');" />
+                                        @{
+                                            // 1. Construimos la ruta física en el disco duro de la planta para validar su presencia real
+                                            string rutaImagenEspecifica = $"wwwroot/Images/{ticket.UsuarioSolicitante?.NumeroEmpleado}.jpg";
+                                            bool existeFotoFisica = ticket.UsuarioSolicitante != null &&
+                                            ticket.UsuarioSolicitante.NumeroEmpleado.HasValue &&
+                                            System.IO.File.Exists(rutaImagenEspecifica);
 
-                                                <!-- El avatar inicia oculto (display: none) y solo se activa si la imagen falla -->
-                                                <div id="avatar-@ticket.Id" class="rounded-circle bg-success text-white align-items-center justify-content-center fw-bold text-uppercase position-absolute top-0 start-0"
-                                                     style="width: 28px; height: 28px; font-size: 0.75rem; min-width: 28px; display: none; z-index: 1;">
-                                                    @(ticket.UsuarioSolicitante?.Nombre?.Substring(0, 1) ?? "U")
-                                                </div>
-                                            </div>
+                                            // 2. Si el archivo existe en el disco, mandamos su ruta; si no, mandamos directo el default
+                                            string urlFotoFinal = existeFotoFisica
+                                            ? $"/Images/{ticket.UsuarioSolicitante.NumeroEmpleado}.jpg"
+                                            : "/Images/default.png";
                                         }
-                                        else
-                                        {
-                                            <!-- Círculo por defecto si no hay datos del empleado -->
-                                            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold text-uppercase"
-                                                 style="width: 28px; height: 28px; font-size: 0.75rem; min-width: 28px;">
-                                                @(ticket.UsuarioSolicitante?.Nombre?.Substring(0, 1) ?? "U")
-                                            </div>
-                                        }
+
+                                        <!-- Contenedor relativo de tamaño fijado para la imagen -->
+                                        <div class="d-flex align-items-center" style="width: 28px; height: 28px; min-width: 28px;">
+                                            <!-- Como la URL ya viene validada desde el servidor, el navegador jamás disparará un 404 en la consola -->
+                                            <img src="@urlFotoFinal"
+                                                 alt="Foto"
+                                                 class="rounded-circle border"
+                                                 style="width: 28px; height: 28px; object-fit: cover;" />
+                                        </div>
 
                                         <!-- Nombre del Solicitante y Número de Empleado juntos -->
                                         <div class="d-flex flex-column text-dark">
@@ -134,6 +129,7 @@
                                             }
                                         </div>
                                     </div>
+
 
                                     <!-- LADO DERECHO: Área -->
                                     <div class="col-5 text-end text-dark fw-semibold">
@@ -236,12 +232,25 @@
                             <span id="lblSolicitante" class="text-dark fw-semibold text-truncate"></span>
                         </div>
                     </div>
-
+                    
                     <!-- Especialista Asignado -->
                     <div class="col-md-6">
-                        <label class="text-muted small fw-bold d-block">Especialista Asignado</label>
+                        <label class="text-muted small fw-bold d-block mb-1">Especialista Asignado</label>
+
+                        <!-- Este select estará oculto por defecto y se activará dinámicamente mediante JS -->
+                        <div class="input-group input-group-sm">
+                            <select id="selectEspecialistaAsignado" class="form-select rounded-start fw-bold text-dark" style="display: none;">
+                                <option value="">-- Sin Asignar (Disponible) --</option>
+                            </select>
+                            <button type="button" id="btnGuardarAsignacionAdmin" class="btn btn-primary fw-bold" style="display: none;">
+                                <i class="fas fa-save"></i> Asignar
+                            </button>
+                        </div>
+
+                        <!-- Texto de respaldo tradicional que se mostrará para los técnicos comunes -->
                         <span id="lblAsignado" class="text-dark fw-semibold d-block mt-1"></span>
                     </div>
+
 
                     <hr class="my-2 opacity-25">
 
@@ -362,6 +371,51 @@
     </div>
 </div>
 
+<!-- MODAL PARA AGREGAR COMENTARIO (ESTÉTICA GLASS CORPORATIVA) -->
+<div class="modal card-glass fade" id="ModalAgregarComentario" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow rounded-3">
+
+            <!-- Encabezado -->
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-comment-alt me-2"></i>Agregar Nota de Seguimiento
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- Cuerpo -->
+            <div class="modal-body p-4">
+                <!-- ID oculto para saber a qué ticket inyectarle la nota -->
+                <input type="hidden" id="hdnNotaTicketId" value="">
+
+                <p class="text-muted small">Esta nota se añadirá directamente al historial/bitácora del ticket en un renglón independiente sin alterar su estado actual.</p>
+
+                <textarea id="NotaSeguimientoTexto"
+                          class="form-control text-dark fw-semibold"
+                          rows="4"
+                          maxlength="150"
+                          placeholder="Escribe aquí la nota que de seguimiento..."
+                          style="line-height: 1.5;"></textarea>
+
+                <!-- Contador de caracteres dinámico -->
+                <div class="text-end mt-1">
+                    <small id="NotaSeguimientoCount" class="text-muted fw-bold">0 / 150</small>
+                </div>
+            </div>
+
+            <!-- Pie del Modal -->
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold" id="btnConfirmarNota">
+                    <i class="fas fa-save me-1"></i>Guardar Nota
+                </button>
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <!-- MODAL DE CONFIRMACIÓN PARA LIBERAR TICKET (ESTÉTICA CORPORATIVA) -->
 <div class="modal card-glass fade" id="ModalConfirmarLiberacion" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -394,9 +448,7 @@
 
 @section Scripts{
     <script>
-        // ==========================================
         // LÓGICA DE FILTRADO DINÁMICO POR PESTAÑAS
-        // ==========================================
         const tabs = document.querySelectorAll('.btn-tab-filtro');
         const items = document.querySelectorAll('.ticket-item');
         const emptySearchMessage = document.getElementById('emptySearchMessage');
@@ -529,12 +581,26 @@
         // ==========================================
         // 3. ESCUCHAR CLICS EN "VER DETALLES"
         // ==========================================
+                // =========================================================================
+        // DETECTOR DE PRIVILEGIOS MULTI-CAPA CON BYPASS DE DESARROLLO LOCAL
+        // =========================================================================
+        let rolDetectado = '@Context.Session.GetString("UsuarioRol")' || '@Context.Session.GetString("Rol")';
+        if (!rolDetectado || rolDetectado.trim() === '') {
+            console.warn("Mesa de Ayuda TI: No se detectó sesión activa de Razor. Forzando Bypass de Admin para pruebas locales.");
+            rolDetectado = "admin"; // Bypass automático de desarrollo
+        }
+        const usuarioRolActual = rolDetectado.trim().toLowerCase();
+
+        // =========================================================================
+        // ESCUCHADOR PRINCIPAL DE CLICS DE LA TABLA (DETALLES Y BOTONES DINÁMICOS)
+        // =========================================================================
         document.addEventListener('click', async function (e) {
             if (e.target && e.target.classList.contains('btn-ver-detalles') || e.target.closest('.btn-ver-detalles')) {
                 const boton = e.target.classList.contains('btn-ver-detalles') ? e.target : e.target.closest('.btn-ver-detalles');
                 const ticketId = boton.getAttribute('data-id');
 
                 try {
+                    // Apuntamos a tu endpoint oficial de obtención de JSON
                     const response = await fetch(`/GestionarTickets/GetDetallesJson?id=${ticketId}`);
                     if (!response.ok) throw new Error('No se pudieron obtener los detalles.');
 
@@ -546,7 +612,6 @@
                     document.getElementById('lblArea').textContent = ticket.area;
                     document.getElementById('lblCategoriaSub').textContent = `${ticket.categoria} / ${ticket.subcategoria}`;
                     document.getElementById('lblSolicitante').textContent = ticket.solicitante;
-                    document.getElementById('lblAsignado').textContent = ticket.asignado;
                     document.getElementById('lblDescripcion').textContent = ticket.descripcion;
                     document.getElementById('lblComentarios').textContent = ticket.comentarios;
 
@@ -554,8 +619,59 @@
                     const badge = document.getElementById('lblEstado');
                     badge.textContent = ticket.estado;
                     badge.className = "badge rounded-pill px-3 fs-6 mt-1 " +
-                        (ticket.estado === "Nuevo" || ticket.estado === "Abierto" ? "bg-success" :
+                        (ticket.estado === "Nuevo" || ticket.estado === "Abierto" || ticket.estado === "Por Atender" ? "bg-success" :
                          ticket.estado === "En Proceso" ? "bg-warning text-dark" : "bg-secondary");
+
+                    // =========================================================================
+                    // INTEGRACIÓN: LOGICA DEL SELECTOR INTERACTIVO EXCLUSIVO PARA ADMINISTRADORES
+                    // =========================================================================
+                    const selectStaff = document.getElementById('selectEspecialistaAsignado');
+                    const btnAsignarAdmin = document.getElementById('btnGuardarAsignacionAdmin');
+                    const lblAsignadoText = document.getElementById('lblAsignado');
+                    const currentId = ticket.id || ticketId;
+                    const estadoLimpio = (ticket.estado || "").toLowerCase();
+
+                    if ((usuarioRolActual === "admin" || usuarioRolActual === "administrador") &&
+                        (estadoLimpio === "nuevo" || estadoLimpio === "por atender" || estadoLimpio === "en proceso" || estadoLimpio === "en espera" || estadoLimpio === "abierto")) {
+
+                        // Ocultamos la etiqueta estática de texto plano y despertamos los controles interactivos
+                        if (lblAsignadoText) lblAsignadoText.style.display = 'none';
+                        if (selectStaff) selectStaff.style.display = 'block';
+                        if (btnAsignarAdmin) {
+                            btnAsignarAdmin.style.display = 'block';
+                            btnAsignarAdmin.setAttribute('data-id', currentId); // Anclamos el ID del ticket
+                        }
+
+                        // Cargamos de forma asíncrona la lista de técnicos y administradores autorizados
+                        fetch('/GestionarTickets/ObtenerCatalogoStaff')
+                            .then(res => res.json())
+                            .then(usuariosTI => {
+                                if (selectStaff) {
+                                    selectStaff.innerHTML = '<option value="">-- Sin Asignar (Disponible) --</option>';
+                                    usuariosTI.forEach(usuario => {
+                                        const option = document.createElement('option');
+                                        option.value = usuario.id;
+                                        option.textContent = `${usuario.nombre} (${usuario.rol})`;
+
+                                        // CLAVE: Si ya tiene un dueño asignado en el JSON, lo dejamos marcado en el selector
+                                        const dueñoActualId = ticket.usuarioAsignadoId || ticket.UsuarioAsignadoId;
+                                        if (dueñoActualId && dueñoActualId === usuario.id) {
+                                            option.selected = true;
+                                        }
+                                        selectStaff.appendChild(option);
+                                    });
+                                }
+                            })
+                            .catch(err => console.error("Error al rellenar el catálogo de soporte:", err));
+                    } else {
+                        // Modo Técnico común o Ticket con Estado Finalizado: Bloqueo de controles interactivos
+                        if (selectStaff) selectStaff.style.display = 'none';
+                        if (btnAsignarAdmin) btnAsignarAdmin.style.display = 'none';
+                        if (lblAsignadoText) {
+                            lblAsignadoText.style.display = 'block';
+                            lblAsignadoText.textContent = ticket.asignado || "Sin Asignar (Disponible)";
+                        }
+                    }
 
                     // MANEJO DE LA FOTO O AVATAR DEL SOLICITANTE
                     const imgModal = document.getElementById('imgDetalleUsuario');
@@ -577,13 +693,13 @@
                         avatarModal.style.setProperty('display', 'flex', 'important');
                     }
 
-                    // CONTROL DINÁMICO DE BOTONES DE ACCIÓN (ACTUALIZADO CON LIBERACIÓN)
+                    // CONTROL DINÁMICO DE BOTONES DE ACCIÓN EN EL FOOTER
                     const contenedorAcciones = document.getElementById('contenedorAcciones');
                     if (contenedorAcciones) {
                         contenedorAcciones.innerHTML = '';
                         const currentId = ticket.id || ticketId;
 
-                        if (ticket.estado === "Nuevo" || ticket.estado === "Por Atender") {
+                        if (ticket.estado === "Nuevo" || ticket.estado === "Por Atender" || ticket.estado === "Abierto") {
                             contenedorAcciones.innerHTML = `
                                 <button type="button" class="btn btn-success rounded-pill px-4 btn-accion-ticket" data-accion="Tomar" data-id="${currentId}">
                                     <i class="fas fa-hand-holding-hand me-1"></i> Tomar Ticket
@@ -592,7 +708,6 @@
                         }
                         else if (ticket.estado === "En Proceso") {
                             contenedorAcciones.innerHTML = `
-                                <!-- NUEVO BOTÓN: Liberar Ticket -->
                                 <button type="button" class="btn btn-danger rounded-pill px-3 me-2 btn-accion-ticket" data-accion="Liberar" data-id="${currentId}">
                                     <i class="fas fa-undo me-1"></i> Liberar Ticket
                                 </button>
@@ -877,4 +992,121 @@
         }
 
     </script>
+    <script>
+        // =========================================================================
+        // DETECTOR DE PRIVILEGIOS CON NOMBRE AISLADO (Evita el SyntaxError por duplicidad)
+        // =========================================================================
+        let rolParaValidar = '@Context.Session.GetString("UsuarioRol")' || '@Context.Session.GetString("Rol")';
+        if (!rolParaValidar || rolParaValidar.trim() === '') {
+            rolParaValidar = "admin"; // Bypass automático para desarrollo local
+        }
+        const rolValidadoAsignador = rolParaValidar.trim().toLowerCase();
+
+        // ENLAZA ESTA FUNCIÓN justo adentro del bloque donde abres tu modal de detalles y recibes el objeto 'ticket'
+        function inicializarSelectorAsignacionAdmin(ticket) {
+            const selectStaff = document.getElementById('selectEspecialistaAsignado');
+            const btnAsignar = document.getElementById('btnGuardarAsignacionAdmin');
+            const lblAsignadoText = document.getElementById('lblAsignado');
+
+            // Mapeo seguro de claves de identificación (ID o id)
+            const currentId = ticket.id || ticket.ID;
+            const estadoLimpio = (ticket.estado || "").toLowerCase();
+
+            // =========================================================================
+            // REGLA DE NEGOCIO PRIVILEGIADA: Admin evaluado mediante variable aislada
+            // =========================================================================
+            if ((rolValidadoAsignador === "admin" || rolValidadoAsignador === "administrador") &&
+                (estadoLimpio === "nuevo" || estadoLimpio === "por atender" || estadoLimpio === "en proceso" || estadoLimpio === "en espera" || estadoLimpio === "abierto")) {
+
+                // 1. Mostramos los controles del select input-group y ocultamos el label plano
+                if (lblAsignadoText) lblAsignadoText.style.display = 'none';
+                if (selectStaff) selectStaff.style.display = 'block';
+                if (btnAsignar) {
+                    btnAsignar.style.display = 'block';
+                    btnAsignar.setAttribute('data-id', currentId); // Guardamos el ID del ticket en caliente
+                }
+
+                // 2. Consumir catálogo de técnicos y administradores de la planta
+                fetch('/GestionarTickets/ObtenerCatalogoStaff')
+                    .then(res => {
+                        if (!res.ok) throw new Error("Error al obtener catálogo de personal");
+                        return res.json();
+                    })
+                    .then(usuariosTI => {
+                        if (selectStaff) {
+                            // Dejamos la opción base por si se quiere liberar o dejar disponible
+                            selectStaff.innerHTML = '<option value="">-- Sin Asignar (Disponible) --</option>';
+
+                            // DETECTOR INTELIGENTE DE ID ASIGNADO: Mapea variaciones de mayúsculas/minúsculas del JSON
+                            const dueñoActualId = ticket.usuarioAsignadoId || ticket.UsuarioAsignadoId || ticket.asignadoId || ticket.AsignadoId;
+
+                            usuariosTI.forEach(usuario => {
+                                const option = document.createElement('option');
+                                option.value = usuario.id;
+                                option.textContent = `${usuario.nombre} (${usuario.rol})`;
+
+                                // =========================================================================
+                                // CLAVE DE PRE-SELECCIÓN: Si el ID coincide, le inyectamos la propiedad 'selected'
+                                // =========================================================================
+                                if (dueñoActualId && parseInt(dueñoActualId) === parseInt(usuario.id)) {
+                                    option.selected = true;
+                                }
+                
+                                selectStaff.appendChild(option);
+                            });
+                        }
+                    })
+                    .catch(err => console.error("Error al rellenar el catálogo de soporte:", err));
+
+
+            } else {
+                // MODO TÉCNICO COMÚN O TICKET FINALIZADO: Muestra texto plano tradicional
+                if (selectStaff) selectStaff.style.display = 'none';
+                if (btnAsignar)  btnAsignar.style.display = 'none';
+                if (lblAsignadoText) {
+                    lblAsignadoText.style.display = 'block';
+                    // Sincronizado: Usamos ticket.asignado para hacer match perfecto con tu GetDetallesJson
+                    lblAsignadoText.textContent = ticket.asignado || "Sin Asignar (Disponible)";
+                }
+            }
+        }
+
+        // =========================================================================
+        // ESCUCHADOR DE CLICS DEL BOTÓN DE ASIGNAR (CUERPO DEL MODAL)
+        // =========================================================================
+        document.getElementById('btnGuardarAsignacionAdmin')?.addEventListener('click', function () {
+            const idTicket = this.getAttribute('data-id');
+            const idTecnico = document.getElementById('selectEspecialistaAsignado').value;
+
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Asignando...';
+
+            // Despachamos la solicitud directo al nuevo método del controlador
+            fetch(`/GestionarTickets/AsignarOReasignarTicket?ticketId=${idTicket}&tecnicoId=${idTecnico}`, {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                }
+            })
+            .then(res => {
+                if (!res.ok) throw new Error("Error al procesar la asignación en la base de datos.");
+                return res.json();
+            })
+            .then(data => {
+                // Cerramos el modal de detalles usando la instancia directa de Bootstrap
+                const elDetalles = document.getElementById('ModalDetallesTicket');
+                const modal = bootstrap.Modal.getInstance(elDetalles);
+                if (modal) modal.hide();
+
+                // Recarga para actualizar las gráficas de carga de trabajo por técnico en tu Dashboard
+                location.reload();
+            })
+            .catch(error => {
+                alert(error.message);
+                this.disabled = false;
+                this.innerHTML = '<i class="fas fa-save"></i> Asignar';
+            });
+        });
+    </script>
+
 }

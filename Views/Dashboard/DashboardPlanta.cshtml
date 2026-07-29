@@ -152,8 +152,10 @@
 <script>
     let chartAnualInstancia = null;
 
-    function cargarGraficaTickets(inicio = '', fin = '') {
-        let url = `/Dashboard/ObtenerMetricasAnuales?inicio=${inicio}&fin=${fin}`;
+    // Se eliminan los parámetros (inicio, fin) para que la función sea estática e independiente
+    function cargarGraficaTickets() {
+        // Se limpia la URL quitando los parámetros de filtrado por fechas
+        let url = `/Dashboard/ObtenerMetricasAnuales`;
 
         fetch(url)
             .then(response => response.json())
@@ -161,18 +163,12 @@
                 const canvasElement = document.getElementById('chartTicketsAnual');
                 if (!canvasElement) return;
 
-                const ctx = canvasElement.getContext('2d');
-
+                // SI LA GRÁFICA YA EXISTE, NO HACE NADA (Evita que los filtros la redibujen o alteren)
                 if (chartAnualInstancia !== null) {
-                    chartAnualInstancia.data.datasets[0].data = data.creados;  
-                    chartAnualInstancia.data.datasets[1].data = data.cerrados; 
-
-                    chartAnualInstancia.update({
-                        duration: 800,
-                        easing: 'easeOutQuart' 
-                    });
-                    return; 
+                    return;
                 }
+
+                const ctx = canvasElement.getContext('2d');
 
                 const graficoExistenteEnCanvas = Chart.getChart("chartTicketsAnual");
                 if (graficoExistenteEnCanvas) {
@@ -213,7 +209,7 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         animation: {
-                            duration: 1000 
+                            duration: 1000
                         },
                         plugins: {
                             legend: {
@@ -236,8 +232,8 @@
                                 align: 'top',
                                 offset: 3,
                                 font: {
-                                    weight: 'bold', 
-                                    size: 15,      
+                                    weight: 'bold',
+                                    size: 15,
                                     family: 'system-ui'
                                 },
                                 formatter: value => value > 0 ? value : '',
@@ -254,9 +250,9 @@
                                 ticks: {
                                     stepSize: 1,
                                     precision: 0,
-                                    font: { family: 'system-ui', weight: 'bold', size: 12 } 
+                                    font: { family: 'system-ui', weight: 'bold', size: 12 }
                                 },
-                                grace: '15%' 
+                                grace: '15%'
                             }
                         }
                     }
@@ -265,6 +261,7 @@
             .catch(error => console.error('Error al cargar la gráfica del dashboard:', error));
     }
 </script>
+
 
 
 <script>

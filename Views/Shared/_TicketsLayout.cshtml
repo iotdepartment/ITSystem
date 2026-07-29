@@ -7,47 +7,141 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - ITSystem</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <!-- Iconos de bootstrap para el menú de usuario -->
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ITSystem.styles.css" asp-append-version="true" />
-    <link rel="icon" type="image/png" href="~/Images/Logo.png" />
+    <link class="layout-favicon" rel="icon" type="image/png" href="~/Images/Logo.png" />
+    <style>
+        /* Estilos base para móviles (Pantallas < 992px) */
+        .sidebar-responsive {
+            width: 100%;
+            z-index: 1040;
+        }
+
+        .main-content-responsive {
+            margin-top: 56px;
+        }
+
+        /* Comportamiento exclusivo para Computadora (Pantallas >= 992px) */
+        @@media (min-width: 992px) {
+            .sidebar-responsive {
+                position: fixed !important;
+                top: 0;
+                bottom: 0;
+                left: 0;
+                width: 260px !important;
+                z-index: 1030;
+                display: flex !important;
+            }
+
+            .main-content-responsive {
+                margin-left: 260px;
+                margin-top: 0 !important;
+            }
+
+            .navbar-toggler {
+                display: none !important;
+            }
+        }
+    </style>
 </head>
 <body class="body-gradient">
-    <header>
-        <nav class="navbar navbar-expand-lg navbar-light shadow-lg bg-secondary px-3">
-            <a class="navbar-brand ms-5" href="/Tickets/Index">
-                <img src="~/Images/Logo.png" alt="Logo" style="height:70px">
-            </a>
-            <a class="navbar-brand ms-5 fw-bold text-light" href="/Tickets2/Index">TGRMX IT Tickets System</a>
+    @{
+        var session = HttpContextAccessor.HttpContext?.Session;
+        var nombreUsuario = session?.GetString("UsuarioNombre");
+        var rolUsuario = session?.GetString("UsuarioRol");
+        var controladorActual = ViewContext.RouteData.Values["Controller"]?.ToString();
+    }
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+    <!-- Barra superior fija exclusiva para Celulares y Tablets -->
+    <nav class="navbar navbar-dark bg-dark d-lg-none px-3 fixed-top shadow">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <span class="navbar-brand fs-6 fw-bold m-0">TGRMX IT Tickets System</span>
+    </nav>
 
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto ms-5 mb-2 mb-lg-0">
-                    <li class="nav-item ms-5"><a class="nav-link text-light" href="/Tickets2/Index">Home</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link text-light" href="#">Help</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link text-light" href="/Login/Index">Iniciar Sesion</a></li>
-                </ul>
-            </div>
-        </nav>
-    </header>
+    <div class="container-fluid p-0">
+        <div class="d-flex flex-column flex-lg-row">
 
-    <div class="container-fluid p-5">
-        <main role="main" class="pb-0">
-            @RenderBody()
-        </main>
-    </div>
+            <!-- Contenedor de la Barra Lateral -->
+            <div class="collapse d-lg-flex flex-column p-3 text-white bg-dark shadow-lg sidebar-responsive fixed-top h-auto m-0 border-0" id="sidebarMenu">
 
-    <footer class="footer text-muted text-center">
-        <div class="container text-black fw-bold">
-            © TGRMX Iot Department 2026
+                <div class="pt-4 pt-lg-0 d-flex flex-column h-100 w-100">
+
+                    <!-- Encabezado de la barra lateral -->
+                    <div class="d-flex align-items-center mb-4 px-2 mt-3 mt-lg-0">
+                        <a href="/Tickets2/Index" class="d-flex align-items-center text-white text-decoration-none gap-2">
+                            <img src="~/Images/Logo.png" alt="Logo" style="height: 40px;" />
+                            <span class="fs-6 fw-bold text-nowrap">TGRMX IT Tickets</span>
+                        </a>
+                    </div>
+
+                    <hr class="border-secondary my-2">
+
+                    <!-- Enlaces de Navegación del Segundo Layout -->
+                    <ul class="nav nav-pills flex-column mb-auto gap-1">
+                        <li class="nav-item">
+                            <a href="/Tickets2/Index"
+                               class="nav-link d-flex align-items-center gap-2 @(controladorActual == "Tickets2" ? "active text-white" : "text-white-50")">
+                                <i class="bi bi-house"></i> Home
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="nav-link text-white-50 d-flex align-items-center gap-2">
+                                <i class="bi bi-question-circle"></i> Help
+                            </a>
+                        </li>
+                    </ul>
+
+                    <hr class="border-secondary my-3">
+
+                    <!-- Sección Dinámica del Usuario en el Menú -->
+                    <div class="dropdown mb-2 mt-auto">
+                        @if (!string.IsNullOrEmpty(nombreUsuario))
+                        {
+                            <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle bg-secondary bg-opacity-25 p-2 rounded gap-2"
+                               id="userDropdownSide" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div class="d-flex flex-column min-w-0 flex-grow-1">
+                                    <span class="fw-bold text-truncate small">@nombreUsuario</span>
+                                    <span class="badge bg-secondary font-monospace alignment-badge align-self-start" style="font-size: 0.65rem;">@rolUsuario</span>
+                                </div>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark shadow border-0 w-100" aria-labelledby="userDropdownSide">
+                                <li>
+                                    <a class="dropdown-item text-danger d-flex align-items-center gap-2 layout-logout" href="/Login/Logout">
+                                        <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                                    </a>
+                                </li>
+                            </ul>
+                        }
+                        else
+                        {
+                            <a class="btn btn-outline-light w-100 rounded d-flex align-items-center justify-content-center gap-2" href="/Login/Index">
+                                <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+                            </a>
+                        }
+                    </div>
+
+                </div>
+            </div> <!-- Cierre de #sidebarMenu -->
+            <!-- Contenido Principal Dinámico -->
+            <main class="flex-grow-1 p-4 main-content-responsive" id="dashboardPrincipal">
+                @RenderBody()
+            </main>
+
+        </div> <!-- Cierre de .d-flex -->
+    </div> <!-- Cierre de .container-fluid -->
+    <!-- Footer Unificado -->
+    <footer class="footer text-muted text-center py-3 bg-light border-top mt-auto">
+        <div class="container text-dark fw-bold">
+            &copy; @DateTime.Now.Year - TGRMX IoT Department
         </div>
     </footer>
 
+    <!-- Scripts Base Cargados en Orden Correcto -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)

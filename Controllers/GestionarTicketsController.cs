@@ -1,6 +1,8 @@
 ﻿using ITSystem.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
+using System.Net.Mail;
 
 namespace ITSystem.Controllers
 {
@@ -44,13 +46,18 @@ namespace ITSystem.Controllers
 
             return Json(new
             {
+                // =========================================================================
+                // ADICIÓN CRÍTICA: Mandamos el ID y el Id numérico del ticket para el JS
+                // =========================================================================
+                id = ticket.Id,
+                usuarioAsignadoId = ticket.UsuarioAsignadoId, // Llave foránea numérica para pre-seleccionar el catálogo
+
                 folio = ticket.Folio,
                 estado = ticket.Estado,
                 categoria = ticket.Categoria?.Nombre ?? "Sin categoría",
                 subcategoria = ticket.Subcategoria?.Nombre ?? "General",
                 area = ticket.Area?.Nombre ?? "N/A",
                 solicitante = ticket.UsuarioSolicitante?.Nombre ?? "Anónimo",
-                // AGREGADO: Mandamos el número de empleado para la foto
                 numeroEmpleado = ticket.UsuarioSolicitante?.NumeroEmpleado,
                 asignado = ticket.UsuarioAsignado?.Nombre ?? "Sin asignar",
                 descripcion = ticket.Descripcion,
@@ -58,6 +65,7 @@ namespace ITSystem.Controllers
                 fecha = ticket.FechaCreacion?.ToString("dd/MM/yyyy hh:mm tt") ?? "N/A"
             });
         }
+
 
         [HttpPost]
         public IActionResult CambiarEstado([FromBody] CambiarEstadoRequest request)
@@ -185,6 +193,134 @@ namespace ITSystem.Controllers
             {
                 return StatusCode(500, new { success = false, message = $"Error interno en el servidor de planta: {ex.Message}" });
             }
+        }
+
+        // 1. ENDPOINT PARA LLENAR EL SELECTOR DEL ADMINISTRADOR
+        [HttpGet]
+        public IActionResult ObtenerCatalogoStaff()
+        {
+            var staffTI = _context.Usuarios
+                .Where(u => !string.IsNullOrEmpty(u.Rol) && (u.Rol == "Tecnico" || u.Rol == "Admin"))
+                .OrderBy(u => u.Nombre)
+                .Select(u => new
+                {
+                    id = u.ID,
+                    nombre = u.Nombre ?? "Sin Nombre",
+                    rol = u.Rol
+                })
+                .ToList();
+
+            return Ok(staffTI);
+        }
+
+        // 2. ENDPOINT EXCLUSIVO PARA ASIGNAR / REASIGNAR DESDE EL CUERPO DEL MODAL
+        [HttpPost]
+        public async Task<IActionResult> AsignarOReasignarTicket(int ticketId, int? tecnicoId)
+        {
+            try
+            {
+                // Validación estricta de privilegios en el servidor
+                string rolSesion = HttpContext.Session.GetString("UsuarioRol") ?? "";
+                string administradorNombre = HttpContext.Session.GetString("UsuarioNombre") ?? "El Administrador";
+
+                if (!rolSesion.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+                {
+                    return Unauthorized(new { success = false, message = "Acceso denegado. Solo administradores pueden gestionar asignaciones." });
+                }
+
+                // Descarga segura del ticket (Inmune a variaciones de ID/Id en tu modelo)
+                var todosLosTickets = await _context.Tickets.ToListAsync();
+                var ticket = todosLosTickets.FirstOrDefault(t =>
+                {
+                    var props = t.GetType().GetProperties();
+                    var propId = props.FirstOrDefault(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase) || p.Name.Equals("ID", StringComparison.OrdinalIgnoreCase));
+                    return propId != null && Convert.ToInt32(propId.GetValue(t)) == ticketId;
+                });
+
+                if (ticket == null) return NotFound(new { success = false, message = "Ticket no localizado." });
+
+                string fechaHoy = DateTime.Now.ToString("dd/MM/yyyy hh:mm tt");
+                string notaHistorial = "";
+
+                // Capturar propiedades dinámicamente con reflexión para su actualización
+                var propTecnicoId = ticket.GetType().GetProperties().FirstOrDefault(p => p.Name.Equals("UsuarioAsignadoId", StringComparison.OrdinalIgnoreCase) || p.Name.Equals("UsuarioAsignadoID", StringComparison.OrdinalIgnoreCase));
+
+                // CASO A: Se seleccionó quitar la asignación o dejarlo vacío
+                if (!tecnicoId.HasValue || tecnicoId.Value <= 0)
+                {
+                    ticket.Estado = "Nuevo";
+                    if (propTecnicoId != null) propTecnicoId.SetValue(ticket, null);
+                    notaHistorial = $"[Modificación Asignación - {fechaHoy}]: {administradorNombre} removió al especialista asignado. El ticket regresa a estado Nuevo.";
+                }
+                // CASO B: Se seleccionó un nuevo técnico (Asignación inicial o Cambio de dueño)
+                else
+                {
+                    var nuevoTecnico = await _context.Usuarios.FirstOrDefaultAsync(u => u.ID == tecnicoId.Value);
+                    if (nuevoTecnico == null) return NotFound(new { success = false, message = "El especialista seleccionado no existe." });
+
+                    int? antiguoTecnicoId = null;
+                    if (propTecnicoId != null) antiguoTecnicoId = (int?)propTecnicoId.GetValue(ticket);
+
+                    // Cambiamos el estado a En Proceso de forma automática
+                    ticket.Estado = "En Proceso";
+                    if (propTecnicoId != null) propTecnicoId.SetValue(ticket, tecnicoId.Value);
+
+                    if (!antiguoTecnicoId.HasValue)
+                    {
+                        // Asignación Inicial
+                        notaHistorial = $"[Asignación Inicial - {fechaHoy}]: {administradorNombre} asignó el ticket al especialista {nuevoTecnico.Nombre}.";
+                    }
+                    else if (antiguoTecnicoId.Value != tecnicoId.Value)
+                    {
+                        // Reasignación (Cambio de dueño en caliente)
+                        notaHistorial = $"[Reasignación - {fechaHoy}]: {administradorNombre} cambió la asignación del ticket al especialista {nuevoTecnico.Nombre}.";
+                    }
+
+                    // Notificación por correo al nuevo dueño asignado (Opcional - Puerto 25 local Planta)
+                    if (!string.IsNullOrEmpty(nuevoTecnico.Correo))
+                    {
+                        _ = EnviarCorreoAlertaAsignacion(nuevoTecnico.Correo, ticket.Folio, administradorNombre);
+                    }
+                }
+
+                // Estampamos el comentario con tu formato de operador ternario e interpolación nativa
+                if (!string.IsNullOrEmpty(notaHistorial))
+                {
+                    ticket.Comentarios = string.IsNullOrEmpty(ticket.Comentarios) ? notaHistorial : $"{ticket.Comentarios}\n{notaHistorial}";
+                }
+
+                _context.Update(ticket);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { success = true, message = "Asignación actualizada correctamente." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        // Método de soporte para despacho de correos
+        private async Task EnviarCorreoAlertaAsignacion(string correoDestino, string folio, string adminNombre)
+        {
+            try
+            {
+                using (MailMessage mensaje = new MailMessage())
+                {
+                    mensaje.From = new MailAddress("extrudersys@outlook.com", "Mesa de Control TI");
+                    mensaje.To.Add(correoDestino);
+                    mensaje.Subject = $"📋 ASIGNACIÓN DE TICKET TI - Folio: {folio}";
+                    mensaje.IsBodyHtml = true;
+                    mensaje.Body = $"<h3>Orden de Trabajo Asignada</h3><p>El administrador <strong>{adminNombre}</strong> te ha asignado el ticket con folio <strong>{folio}</strong>. Por favor, ingresa al sistema para atenderlo.</p>";
+                    using (SmtpClient smtp = new SmtpClient("kysmtp.tggroup.local", 25))
+                    {
+                        smtp.Credentials = new NetworkCredential("extrudersys@outlook.com", "01TG-ExtSys2024");
+                        smtp.EnableSsl = false;
+                        await smtp.SendMailAsync(mensaje);
+                    }
+                }
+            }
+            catch { /* Silencioso en red local */ }
         }
 
 
